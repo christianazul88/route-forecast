@@ -36,9 +36,9 @@
 </nav>
 <?php endif; ?>
 <main class="container-xl py-4 py-lg-5">
-<?php if ($message = take_flash()): ?>
-    <div class="alert alert-<?= e($message['type']) ?> alert-dismissible fade show" role="alert">
-        <?= e($message['message']) ?>
+<?php if ($flashMessage = take_flash()): ?>
+    <div class="alert alert-<?= e($flashMessage['type']) ?> alert-dismissible fade show" role="alert">
+        <?= e($flashMessage['message']) ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
