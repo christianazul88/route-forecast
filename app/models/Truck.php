@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 final class Truck
 {
+    public const BODY_TYPES = ['Ordinary dropside', 'Aluminum dropside', 'Wing van', 'Closed van', 'Reefer van'];
+
     public static function active(): array
     {
-        return db()->query('SELECT id, plate_no, name, capacity_kg, cargo_length_cm, cargo_width_cm, cargo_height_cm, door_width_cm, door_height_cm FROM trucks WHERE is_active = 1 ORDER BY plate_no')->fetchAll();
+        return db()->query('SELECT id, plate_no, name, body_type, capacity_kg, cargo_length_cm, cargo_width_cm, cargo_height_cm, door_width_cm, door_height_cm FROM trucks WHERE is_active = 1 ORDER BY plate_no')->fetchAll();
     }
 
     public static function all(): array
@@ -22,13 +24,13 @@ final class Truck
 
     public static function save(array $data, ?int $id): int
     {
-        $fields = [$data['plate_no'], $data['name'], $data['capacity_kg'], $data['cargo_length_cm'], $data['cargo_width_cm'], $data['cargo_height_cm'], $data['door_width_cm'], $data['door_height_cm'], $data['is_active']];
+        $fields = [$data['plate_no'], $data['name'], $data['body_type'], $data['capacity_kg'], $data['cargo_length_cm'], $data['cargo_width_cm'], $data['cargo_height_cm'], $data['door_width_cm'], $data['door_height_cm'], $data['is_active']];
         if ($id === null) {
-            $statement = db()->prepare('INSERT INTO trucks (plate_no, name, capacity_kg, cargo_length_cm, cargo_width_cm, cargo_height_cm, door_width_cm, door_height_cm, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $statement = db()->prepare('INSERT INTO trucks (plate_no, name, body_type, capacity_kg, cargo_length_cm, cargo_width_cm, cargo_height_cm, door_width_cm, door_height_cm, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $statement->execute($fields);
             $id = (int) db()->lastInsertId();
         } else {
-            $statement = db()->prepare('UPDATE trucks SET plate_no = ?, name = ?, capacity_kg = ?, cargo_length_cm = ?, cargo_width_cm = ?, cargo_height_cm = ?, door_width_cm = ?, door_height_cm = ?, is_active = ? WHERE id = ?');
+            $statement = db()->prepare('UPDATE trucks SET plate_no = ?, name = ?, body_type = ?, capacity_kg = ?, cargo_length_cm = ?, cargo_width_cm = ?, cargo_height_cm = ?, door_width_cm = ?, door_height_cm = ?, is_active = ? WHERE id = ?');
             $statement->execute([...$fields, $id]);
         }
         audit('save', 'truck', $id, ['plate_no' => $data['plate_no']]);

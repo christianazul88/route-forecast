@@ -75,7 +75,7 @@ $mapBranches = array_map(static fn(array $branch): array => [
             <h2 class="h5 fw-bold mb-3">Save trip</h2>
             <p class="small mb-3"><a href="<?= e(url('load_planner')) ?>">Check truck load capacity →</a></p>
             <form id="saveTripForm">
-                <div class="mb-3"><label for="tripTruck" class="form-label fw-semibold">Truck</label><select id="tripTruck" class="form-select" required><option value="">Choose truck</option><?php foreach ($trucks as $truck): ?><option value="<?= (int) $truck['id'] ?>"><?= e($truck['plate_no'] . ' · ' . $truck['name']) ?> (<?= e(number_format((float) $truck['capacity_kg'], 0)) ?> kg)</option><?php endforeach; ?></select></div>
+                <div class="mb-3"><label for="tripTruck" class="form-label fw-semibold">Truck</label><select id="tripTruck" class="form-select" required><option value="">Choose truck</option><?php foreach ($trucks as $truck): ?><option value="<?= (int) $truck['id'] ?>"><?= e($truck['plate_no'] . ' · ' . ($truck['body_type'] ?: $truck['name'])) ?> (<?= e(number_format((float) $truck['capacity_kg'], 0)) ?> kg)</option><?php endforeach; ?></select></div>
                 <div class="mb-3"><label for="tripDriver" class="form-label fw-semibold">Driver</label><input id="tripDriver" type="text" class="form-control" maxlength="120" placeholder="Driver's full name" required></div>
                 <div class="mb-3"><label for="tripDate" class="form-label fw-semibold">Trip date</label><input id="tripDate" type="date" class="form-control" value="<?= e($today) ?>" required></div>
                 <button id="saveTripButton" type="submit" class="btn btn-primary w-100" disabled>Save planned trip</button>

@@ -33,6 +33,7 @@ final class TruckController
             'id' => $id,
             'plate_no' => strtoupper(trim((string) ($_POST['plate_no'] ?? ''))),
             'name' => trim((string) ($_POST['name'] ?? '')),
+            'body_type' => trim((string) ($_POST['body_type'] ?? '')),
             'capacity_kg' => trim((string) ($_POST['capacity_kg'] ?? '')),
             'cargo_length_cm' => trim((string) ($_POST['cargo_length_cm'] ?? '')),
             'cargo_width_cm' => trim((string) ($_POST['cargo_width_cm'] ?? '')),
@@ -47,6 +48,9 @@ final class TruckController
         }
         if ($truck['name'] === '' || mb_strlen($truck['name']) > 120) {
             $errors[] = 'Truck name is required and must be at most 120 characters.';
+        }
+        if (!in_array($truck['body_type'], Truck::BODY_TYPES, true)) {
+            $errors[] = 'Choose a valid truck body type.';
         }
         if (!is_numeric($truck['capacity_kg']) || (float) $truck['capacity_kg'] <= 0 || (float) $truck['capacity_kg'] > 99999999.99) {
             $errors[] = 'Capacity must be a positive number of kilograms.';

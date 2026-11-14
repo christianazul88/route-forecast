@@ -3,6 +3,7 @@ $truckData = array_map(static fn(array $truck): array => [
     'id' => (int) $truck['id'],
     'plate' => $truck['plate_no'],
     'name' => $truck['name'],
+    'bodyType' => $truck['body_type'],
     'capacity' => (float) $truck['capacity_kg'],
     'length' => $truck['cargo_length_cm'] === null ? null : (float) $truck['cargo_length_cm'],
     'width' => $truck['cargo_width_cm'] === null ? null : (float) $truck['cargo_width_cm'],
@@ -32,7 +33,7 @@ $boxData = array_map(static fn(array $box): array => [
             <div class="card border-0 shadow-sm mb-3"><div class="card-body p-4">
                 <h2 class="h5 fw-bold mb-3">Truck and clearance</h2>
                 <label for="loadTruck" class="form-label fw-semibold">Truck</label>
-                <select id="loadTruck" class="form-select mb-3"><option value="">Choose a truck</option><?php foreach ($trucks as $truck): ?><option value="<?= (int) $truck['id'] ?>" <?= (int) $truck['id'] === $selectedTruck ? 'selected' : '' ?>><?= e($truck['plate_no'] . ' · ' . $truck['name']) ?></option><?php endforeach; ?><option value="custom" <?= !$trucks ? 'selected' : '' ?>>Custom truck dimensions…</option></select>
+                <select id="loadTruck" class="form-select mb-3"><option value="">Choose a truck</option><?php foreach ($trucks as $truck): ?><option value="<?= (int) $truck['id'] ?>" <?= (int) $truck['id'] === $selectedTruck ? 'selected' : '' ?>><?= e($truck['plate_no'] . ' · ' . ($truck['body_type'] ?: $truck['name'])) ?></option><?php endforeach; ?><option value="custom" <?= !$trucks ? 'selected' : '' ?>>Custom truck dimensions…</option></select>
                 <div id="truckMeasurements" class="small text-secondary mb-3">Select a truck to see its usable space.</div>
                 <div id="customTruckFields" class="row g-2 mb-3 d-none">
                     <div class="col-12 small text-secondary">Enter measured clear interior dimensions. A nominal 16 ft body is 487.68 cm long, but its usable interior may be shorter.</div>

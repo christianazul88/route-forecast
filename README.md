@@ -31,6 +31,7 @@ The load planner estimates how many mixed packages fit in a measured truck cargo
 
 If upgrading a database created before Phase 3, run `database/migrations/003_trip_stop_legs.sql` once. New installations already include those columns in `schema.sql`.
 For a database created before the load planner, run `database/migrations/004_load_planning.sql` once. Run the migration before uploading the updated PHP files to a live host. New installations already include the truck measurements and `box_types` table.
+For a database created before truck body types were added, run `database/migrations/005_truck_body_types.sql` once after migration 004. Existing trucks keep a blank body type until an Admin edits them; new trucks require a choice.
 
 Admin users can add, edit, and archive branches and trucks. Planner users can view them. Archiving keeps references intact for future trip history; edit an archived record to reactivate it. The origin warehouse cannot be archived. The map coordinates in the seed data are approximate and should be checked with the picker before operational use.
 
@@ -56,11 +57,11 @@ The dashboard shows today's trips, trips in the next seven days, and counts by s
 
 ## Load planner
 
-1. In **Trucks**, enter the measured clear interior length, width, and height in centimeters. The rear door width and height are optional but recommended. A nominal “16 ft closed van” tells you only the approximate body length (16 ft = 487.68 cm); the usable interior and door opening vary by body. Measure the actual truck before using an estimate.
+1. In **Trucks**, choose ordinary dropside, aluminum dropside, wing van, closed van, or reefer van, then save the plate number, payload, and measured usable cargo length, width, and height in centimeters. The loading opening width and height are optional. A nominal “16 ft closed van” tells you only the approximate body length (16 ft = 487.68 cm); the usable cargo space varies by vehicle. For an open dropside, enter a safe loading height; for a reefer, measure clear of insulation and cooling equipment. Reusing a saved plate in **Load planner** retrieves its body type and measurements automatically.
 2. In **Box types**, an Admin records each package's outside dimensions, weight, and whether a rectangular box may be placed on its side. Shapes are rectangular box and upright cylinder. Cylinders use a square footprint equal to their diameter, which is conservative.
 3. In **Load planner**, select a saved truck or enter one-off custom truck dimensions, set wall/roof clearance, and add saved package types or one-off custom dimensions with requested quantities. Planners can enter custom trucks and package shapes without changing either catalog. The calculator places larger packages first, checks payload and optional door clearance, and shows a first-layer floor view. The **What else could fit?** table evaluates each extra package type separately on top of the planned load; its quantities are not additive.
 
-The calculator uses an axis-aligned, row-by-row packing estimate. It does not model wheel wells, axle loads, lashing, pallet bases, package crush limits, unload order, or forklift access. It assumes stable stacking and a clear rectangular cargo bay. Confirm the physical load plan before dispatch. Plans are currently estimates in the browser; they are not saved to trips.
+The calculator uses an axis-aligned, row-by-row packing estimate. Body type is descriptive; capacity comes from the truck's measured dimensions and payload, not a preset for the label. It does not model wheel wells, axle loads, lashing, pallet bases, package crush limits, unload order, refrigeration equipment inside the measured space, or forklift access. It assumes stable stacking and a clear rectangular cargo bay. Confirm the physical load plan before dispatch. Plans are currently estimates in the browser; they are not saved to trips.
 
 To verify the packing logic, run `node tests/load-packing.test.mjs` on a development machine. Node is only for tests; the app needs no build step or Node at runtime.
 
@@ -74,7 +75,7 @@ For a host where the app files are inside its `htdocs` web root:
 2. Upload the application files into the site's `htdocs` folder, including the `.htaccess` files in `app`, `config`, and `database`.
 3. Copy `config/env.example` to `config/.env` **on the host only**. Fill in the host's DB values, `ORS_API_KEY`, and a random `SETUP_TOKEN` of at least 20 characters. Do not commit or share `.env`. The `config/.htaccess` file must deny browser access to it; verify that `https://your-domain/config/.env` returns HTTP 403 before proceeding.
 4. Select the new database in phpMyAdmin and import `database/hosting_schema.sql`. This variant omits `CREATE DATABASE` and `USE`, which free hosts commonly disallow. Regenerate it after schema changes with `php database/build_hosting_schema.php`.
-   For an existing hosted installation, import only `database/migrations/004_load_planning.sql` once before uploading this module. Do not reimport `hosting_schema.sql` to upgrade an existing database.
+   For an existing hosted installation, apply any outstanding migrations in order, including `database/migrations/004_load_planning.sql` and `database/migrations/005_truck_body_types.sql`, before uploading the updated PHP files. Do not reimport `hosting_schema.sql` to upgrade an existing database.
 5. Visit `https://your-domain/public/setup.php` and create the first admin using the setup token. This page becomes unavailable as soon as a user exists. Remove `SETUP_TOKEN` from `.env` afterward.
 6. Open the site's root URL, sign in, verify a branch map, and test a route to confirm the host can reach ORS.
 

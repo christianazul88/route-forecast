@@ -36,9 +36,9 @@ if (root) {
         } else if (!truck) {
             target.textContent = 'Select a truck to see its usable space.';
         } else if (truck.length == null || truck.width == null || truck.height == null) {
-            target.textContent = 'This truck has no interior measurements. Ask an admin to enter them in Trucks.';
+            target.textContent = `${truck.bodyType || 'Body type not set'} · No usable cargo measurements yet. Ask an admin to enter them in Trucks.`;
         } else {
-            target.textContent = `Usable interior: ${number.format(truck.length)} × ${number.format(truck.width)} × ${number.format(truck.height)} cm · ${number.format(truck.capacity)} kg payload${truck.doorWidth == null ? ' · door opening not measured' : ` · door ${number.format(truck.doorWidth)} × ${number.format(truck.doorHeight)} cm`}.`;
+            target.textContent = `${truck.bodyType || 'Body type not set'} · Usable cargo space: ${number.format(truck.length)} × ${number.format(truck.width)} × ${number.format(truck.height)} cm · ${number.format(truck.capacity)} kg payload${truck.doorWidth == null ? ' · loading opening not measured' : ` · loading opening ${number.format(truck.doorWidth)} × ${number.format(truck.doorHeight)} cm`}.`;
         }
     }
 

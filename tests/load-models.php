@@ -9,6 +9,7 @@ try {
     $truckId = Truck::save([
         'plate_no' => 'TEST-LOAD-001',
         'name' => 'Rollback test van',
+        'body_type' => 'Closed van',
         'capacity_kg' => '2000',
         'cargo_length_cm' => '480',
         'cargo_width_cm' => '200',
@@ -30,7 +31,7 @@ try {
     ], null);
     $truck = Truck::find($truckId);
     $box = BoxType::find($boxId);
-    if (!$truck || !$box || (float) $truck['cargo_length_cm'] !== 480.0 || (float) $box['weight_kg'] !== 5.0) {
+    if (!$truck || !$box || $truck['body_type'] !== 'Closed van' || (float) $truck['cargo_length_cm'] !== 480.0 || (float) $box['weight_kg'] !== 5.0) {
         throw new RuntimeException('Load planning models did not round-trip through MySQL.');
     }
     echo "Load planning models passed.\n";
