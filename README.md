@@ -89,4 +89,4 @@ database/     Schemas, seed branches, migration, CLI admin creator
 public/       Web entry point and CSS/JavaScript assets
 ```
 
-`app`, `config`, `database`, and `tests` also contain `.htaccess` access blocks for the standard XAMPP document root. Open the app through `public/index.php` (the project root redirects there).
+`app`, `config`, `database`, and `tests` contain `.htaccess` access blocks for the standard XAMPP document root. `public/.htaccess` serves `.mjs` modules with a JavaScript MIME type. Open the app through `public/index.php` (the project root redirects there).
