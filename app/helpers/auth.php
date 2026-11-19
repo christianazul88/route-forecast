@@ -48,7 +48,13 @@ function attempt_login(string $username, string $password): bool
         'full_name' => $user['full_name'],
         'role' => $user['role'],
     ];
-    unset($_SESSION['csrf_token']);
+    unset($_SESSION['csrf_token'], $_SESSION['login_messages']);
+    $messageUsername = (string) config('LOGIN_MESSAGE_USERNAME', '');
+    $firstMessage = trim((string) config('LOGIN_MESSAGE_FIRST', ''));
+    $secondMessage = trim((string) config('LOGIN_MESSAGE_SECOND', ''));
+    if ($firstMessage !== '' && $secondMessage !== '' && strcasecmp($user['username'], $messageUsername) === 0) {
+        $_SESSION['login_messages'] = [$firstMessage, $secondMessage];
+    }
     return true;
 }
 

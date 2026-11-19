@@ -12,7 +12,7 @@ final class User
 
     public static function findByUsername(string $username): ?array
     {
-        $statement = db()->prepare('SELECT id, full_name, password_hash, role, is_active FROM users WHERE username = ? LIMIT 1');
+        $statement = db()->prepare('SELECT id, username, full_name, password_hash, role, is_active FROM users WHERE username = ? LIMIT 1');
         $statement->execute([$username]);
         return $statement->fetch() ?: null;
     }
