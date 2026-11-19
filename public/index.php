@@ -20,6 +20,7 @@ $routes = [
     'box_save' => [BoxTypeController::class, 'save'],
     'box_archive' => [BoxTypeController::class, 'archive'],
     'load_planner' => [LoadPlanController::class, 'index'],
+    'load_plan_save' => [LoadPlanController::class, 'save'],
     'forecast' => [RouteForecastController::class, 'index'],
     'route_proxy' => [RouteProxyController::class, 'route'],
     'dashboard' => [DashboardController::class, 'index'],

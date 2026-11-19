@@ -1,13 +1,20 @@
 <?php
 $defaultOrigin = null;
 $defaultDestination = null;
+$demoBranches = [];
 foreach ($branches as $branch) {
+    if (str_starts_with($branch['code'], 'DEMO-')) $demoBranches[$branch['code']] = (int) $branch['id'];
     if ($branch['is_origin']) {
         $defaultOrigin = (int) $branch['id'];
     }
     if ($branch['code'] === 'VAL-01') {
         $defaultDestination = (int) $branch['id'];
     }
+}
+$isDemo = ($_GET['demo'] ?? '') === '1' && isset($demoBranches['DEMO-GTG'], $demoBranches['DEMO-VAL']);
+if ($isDemo) {
+    $defaultOrigin = $demoBranches['DEMO-GTG'];
+    $defaultDestination = $demoBranches['DEMO-VAL'];
 }
 if ($defaultOrigin === null && $branches) {
     $defaultOrigin = (int) $branches[0]['id'];
@@ -36,8 +43,11 @@ $mapBranches = array_map(static fn(array $branch): array => [
         <h1 class="display-6 fw-bold mb-1">Route Forecast</h1>
         <p class="text-secondary mb-0">Find branches along a truck route and preview the time added by extra stops.</p>
     </div>
-    <span class="badge rounded-pill text-bg-light border px-3 py-2">Guiguinto network · <?= count($branches) ?> active branches</span>
+    <?php if ($demoAvailable): ?>
+        <a class="btn btn-outline-primary" href="<?= e(url('forecast', $isDemo ? [] : ['demo' => 1])) ?>"><?= $isDemo ? 'Back to usual route' : 'Try demo route' ?></a>
+    <?php endif; ?>
 </div>
+<?php if ($isDemo): ?><p class="alert alert-info">Demo route using public landmarks. Look for Bocaue Municipal Hall in the suggested stops.</p><?php endif; ?>
 
 <div class="row g-4 forecast-layout">
     <div class="col-lg-4">
@@ -59,7 +69,7 @@ $mapBranches = array_map(static fn(array $branch): array => [
                 <label for="corridorKm" class="form-label fw-semibold mb-0">Route corridor</label>
                 <strong id="corridorValue" class="text-primary">1.5 km</strong>
             </div>
-            <input id="corridorKm" class="form-range" type="range" min="0.5" max="5" step="0.1" value="1.5">
+            <input id="corridorKm" class="form-range" type="range" min="0.5" max="5" step="0.1" value="<?= $isDemo ? '5' : '1.5' ?>">
             <div class="d-flex justify-content-between text-secondary small"><span>0.5 km</span><span>5 km</span></div>
         </div></div>
 

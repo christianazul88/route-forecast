@@ -40,6 +40,17 @@ body { background: var(--page); color: var(--ink); min-height: 100vh; }
 .load-swatch { display: inline-block; width: .8rem; height: .8rem; border-radius: .15rem; margin-right: .35rem; vertical-align: -.05rem; }
 .load-scene { position: relative; background: #f2f6f7; border: 1px solid #d9e4e7; border-radius: .6rem; overflow: hidden; }
 .load-scene canvas { display: block; width: 100%; height: clamp(240px, 33vw, 360px); }
+.load-scene canvas { touch-action: pan-y; cursor: grab; }
+.load-scene canvas:active { cursor: grabbing; }
+#loadPlanner .min-w-0 { min-width: 0; }
+.door-toggle { display: inline-flex; align-items: center; gap: .5rem; padding: .48rem; font-size: .86rem; }
+.crew-steps li { padding-bottom: .5rem; }
+@media (max-width: 575px) {
+  #loadPlanner .card-body { padding: 1rem !important; }
+  #loadPlanner :is(button, select, summary, .door-toggle) { min-height: 44px; }
+  #loadPlanner .metric-value { font-size: 1.65rem; }
+  #loadPlanner .form-range { height: 2.25rem; }
+}
 .load-placeholder { position: absolute; inset: 0; display: grid; place-items: center; }
 .load-end-label { position: absolute; transform: translate(-50%, .35rem); pointer-events: none; background: #fff; color: #264651; font-size: .72rem; padding: .08rem .35rem; border-radius: .3rem; white-space: nowrap; }
 #loadPlanner [hidden] { display: none !important; }

@@ -1,0 +1,12 @@
+ALTER TABLE trucks ADD COLUMN openings_json LONGTEXT DEFAULT NULL AFTER door_height_cm;
+
+CREATE TABLE IF NOT EXISTS trip_load_plans (
+    trip_id BIGINT UNSIGNED PRIMARY KEY,
+    source_hash CHAR(64) NOT NULL,
+    revision INT UNSIGNED NOT NULL DEFAULT 1,
+    payload_json LONGTEXT NOT NULL,
+    updated_by BIGINT UNSIGNED NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_load_plan_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+    CONSTRAINT fk_load_plan_user FOREIGN KEY (updated_by) REFERENCES users(id)
+) ENGINE=InnoDB;

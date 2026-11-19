@@ -13,7 +13,7 @@ $mapStops = array_map(static fn(array $stop): array => [
 ?>
 <div class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
     <div><a class="text-decoration-none small" href="<?= e(url('trips')) ?>">← Back to trips</a><div class="eyebrow mt-3 mb-2">SAVED TRIP</div><h1 class="display-6 fw-bold mb-1"><?= e($trip['trip_no']) ?></h1><p class="text-secondary mb-0"><?= e(date('F j, Y', strtotime($trip['trip_date']))) ?> · <?= e($trip['origin_name']) ?> → <?= e($trip['destination_name']) ?></p></div>
-    <div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-primary" href="<?= e(url('trip_sheet', ['id' => $trip['id']])) ?>">Print trip sheet</a><a class="btn btn-outline-primary" href="<?= e(url('trip_csv', ['id' => $trip['id']])) ?>">Export CSV</a></div>
+    <div class="d-flex flex-wrap gap-2"><a class="btn btn-primary" href="<?= e(url('load_planner', ['trip_id' => $trip['id']])) ?>">Load plan</a><a class="btn btn-outline-primary" href="<?= e(url('trip_sheet', ['id' => $trip['id']])) ?>">Print trip sheet</a><a class="btn btn-outline-primary" href="<?= e(url('trip_csv', ['id' => $trip['id']])) ?>">Export CSV</a></div>
 </div>
 <div class="row g-4 mb-4">
     <div class="col-lg-8"><div class="card border-0 shadow-sm"><div class="card-body p-3"><div id="savedRouteMap" class="map detail-map"

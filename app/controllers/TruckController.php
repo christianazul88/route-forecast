@@ -35,11 +35,10 @@ final class TruckController
             'name' => trim((string) ($_POST['name'] ?? '')),
             'body_type' => trim((string) ($_POST['body_type'] ?? '')),
             'capacity_kg' => trim((string) ($_POST['capacity_kg'] ?? '')),
-            'cargo_length_cm' => trim((string) ($_POST['cargo_length_cm'] ?? '')),
-            'cargo_width_cm' => trim((string) ($_POST['cargo_width_cm'] ?? '')),
-            'cargo_height_cm' => trim((string) ($_POST['cargo_height_cm'] ?? '')),
-            'door_width_cm' => trim((string) ($_POST['door_width_cm'] ?? '')),
-            'door_height_cm' => trim((string) ($_POST['door_height_cm'] ?? '')),
+            'cargo_length_ft' => trim((string) ($_POST['cargo_length_ft'] ?? '')),
+            'cargo_width_ft' => trim((string) ($_POST['cargo_width_ft'] ?? '')),
+            'cargo_height_ft' => trim((string) ($_POST['cargo_height_ft'] ?? '')),
+            'opening_fields' => array_values(array_slice((array) ($_POST['openings'] ?? []), 0, 9)),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
         $errors = [];
@@ -55,35 +54,22 @@ final class TruckController
         if (!is_numeric($truck['capacity_kg']) || (float) $truck['capacity_kg'] <= 0 || (float) $truck['capacity_kg'] > 99999999.99) {
             $errors[] = 'Capacity must be a positive number of kilograms.';
         }
-        $cargoFields = ['cargo_length_cm', 'cargo_width_cm', 'cargo_height_cm'];
-        $doorFields = ['door_width_cm', 'door_height_cm'];
-        foreach (array_merge($cargoFields, $doorFields) as $field) {
-            if ($truck[$field] !== '' && (!is_numeric($truck[$field]) || (float) $truck[$field] <= 0 || (float) $truck[$field] > 2000)) {
-                $errors[] = 'Cargo and door measurements must be positive centimeters up to 2,000.';
-                break;
+        $filledCargo = 0;
+        foreach (['length', 'width', 'height'] as $axis) {
+            $value = $truck["cargo_{$axis}_ft"];
+            $truck["cargo_{$axis}_cm"] = $value === '' ? null : self::feet($value);
+            if ($value !== '') {
+                $filledCargo++;
+                if ($truck["cargo_{$axis}_cm"] === null) $errors[] = 'Enter a valid interior ' . $axis . ' in feet.';
             }
         }
-        $filledCargo = count(array_filter($cargoFields, static fn(string $field): bool => $truck[$field] !== ''));
-        $filledDoor = count(array_filter($doorFields, static fn(string $field): bool => $truck[$field] !== ''));
         if ($filledCargo !== 0 && $filledCargo !== 3) {
             $errors[] = 'Enter all three usable interior measurements, or leave them all blank.';
         }
-        if ($filledDoor !== 0 && $filledDoor !== 2) {
-            $errors[] = 'Enter both door measurements, or leave both blank.';
-        }
-        if ($filledDoor === 2 && $filledCargo !== 3) {
-            $errors[] = 'Enter the cargo space before the door opening.';
-        }
-        if ($filledDoor === 2 && $filledCargo === 3 &&
-            ((float) $truck['door_width_cm'] > (float) $truck['cargo_width_cm'] || (float) $truck['door_height_cm'] > (float) $truck['cargo_height_cm'])) {
-            $errors[] = 'The door opening cannot exceed the usable interior width or height.';
-        }
+        $truck['openings'] = self::readOpenings($truck, $errors);
         if ($errors) {
             render('trucks/form', ['title' => $id ? 'Edit truck' : 'Add truck', 'truck' => $truck, 'errors' => $errors]);
             return;
-        }
-        foreach (array_merge($cargoFields, $doorFields) as $field) {
-            $truck[$field] = $truck[$field] === '' ? null : $truck[$field];
         }
         try {
             $savedId = Truck::save($truck, $id);
@@ -95,6 +81,38 @@ final class TruckController
             }
             render('trucks/form', ['title' => $id ? 'Edit truck' : 'Add truck', 'truck' => $truck, 'errors' => ['Plate number already exists.']]);
         }
+    }
+
+    private static function feet(mixed $value, bool $allowZero = false): ?float
+    {
+        if (!is_numeric($value)) return null;
+        $cm = round((float) $value * Truck::CM_PER_FOOT, 2);
+        return is_finite($cm) && $cm >= ($allowZero ? 0 : 0.01) && $cm <= 2000 ? $cm : null;
+    }
+
+    private static function readOpenings(array $truck, array &$errors): array
+    {
+        $openings = [];
+        if (count($truck['opening_fields']) > 8) $errors[] = 'Save up to eight openings per truck.';
+        foreach ($truck['opening_fields'] as $index => $row) {
+            $row = (array) $row;
+            $side = $row['side'] ?? '';
+            $offset = self::feet($row['offset'] ?? '', true);
+            $width = self::feet($row['width'] ?? '');
+            $sill = self::feet($row['sill'] ?? '', true);
+            $height = self::feet($row['height'] ?? '');
+            $span = $side === 'rear' ? $truck['cargo_width_cm'] : $truck['cargo_length_cm'];
+            if (!in_array($side, ['rear', 'left', 'right'], true) || $offset === null || $width === null
+                || $sill === null || $height === null || $span === null || $truck['cargo_height_cm'] === null
+                || $offset + $width > $span + .011 || $sill + $height > $truck['cargo_height_cm'] + .011) {
+                $errors[] = 'Opening ' . ($index + 1) . ' requires valid measurements within the cargo body.';
+                continue;
+            }
+            $opening = compact('side', 'offset', 'width', 'sill', 'height');
+            if (in_array($opening, $openings, true)) $errors[] = 'Remove the repeated opening.';
+            $openings[] = $opening;
+        }
+        return $openings;
     }
 
     public static function archive(): void

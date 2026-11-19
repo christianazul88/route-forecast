@@ -1,6 +1,6 @@
 const svgNamespace = 'http://www.w3.org/2000/svg';
 
-export function renderLoadFloor(container, state, colors) {
+export function renderLoadFloor(container, state, colors, colorKey = row => row.boxId) {
     const svg = document.createElementNS(svgNamespace, 'svg');
     svg.setAttribute('viewBox', `0 0 ${state.length} ${state.width}`);
     svg.setAttribute('role', 'img');
@@ -13,7 +13,7 @@ export function renderLoadFloor(container, state, colors) {
         rect.setAttribute('y', row.y);
         rect.setAttribute('width', row.l * row.count);
         rect.setAttribute('height', row.w);
-        rect.setAttribute('fill', colors.get(row.boxId));
+        rect.setAttribute('fill', colors.get(colorKey(row)));
         rect.setAttribute('stroke', '#fff');
         rect.setAttribute('stroke-width', '1.5');
         svg.append(rect);
@@ -161,16 +161,27 @@ export function createLoadView(canvas, cabLabel, rearLabel) {
     const observer = new ResizeObserver(draw);
     observer.observe(canvas);
 
-    function setLoad(state, visible, colors, packages, selectedRow) {
+    function setLoad(state, visible, colors, packages, selectedRow, colorKey = row => row.boxId) {
         truck = state;
         const wire = [];
         const surfaces = [];
         const outlines = [];
         const body = corners(0, 0, 0, truck.length, truck.width, truck.height);
         for (const [a,b] of edges) appendLine(wire, body[a], body[b], [.39,.50,.55], a >= 4 || b >= 4);
+        for (const door of state.openings ?? []) {
+            if (door.start >= door.end || door.sill >= door.top) continue;
+            const coordinates = door.side === 'rear'
+                ? (across, z) => [truck.length, across, z]
+                : (across, z) => [across, door.side === 'left' ? 0 : truck.width, z];
+            const frame = [coordinates(door.start, door.sill), coordinates(door.end, door.sill),
+                coordinates(door.end, door.top), coordinates(door.start, door.top)];
+            const matches = selectedRow?.doorId === door.id;
+            frame.forEach((vertex, index) => appendLine(wire, vertex, frame[(index + 1) % 4],
+                matches ? [.98,.57,.16] : [.13,.46,.55]));
+        }
         const groupRows = visible.reduce((sum, row) => sum + row.count, 0) > 1500;
         for (const row of visible) {
-            const hex = colors.get(row.boxId);
+            const hex = colors.get(colorKey(row));
             const color = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
             const irregular = packages.get(row.boxId).shape === 'Irregular';
             const outline = row === selectedRow ? [1,.95,.44] : irregular ? [.25,.16,.07] : [.13,.23,.27];

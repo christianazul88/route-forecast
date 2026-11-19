@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS trucks (
     cargo_height_cm DECIMAL(8,2) DEFAULT NULL,
     door_width_cm DECIMAL(8,2) DEFAULT NULL,
     door_height_cm DECIMAL(8,2) DEFAULT NULL,
+    openings_json LONGTEXT DEFAULT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -97,6 +98,17 @@ CREATE TABLE IF NOT EXISTS trip_stops (
     CONSTRAINT fk_stops_branch FOREIGN KEY (branch_id) REFERENCES branches(id),
     UNIQUE KEY uq_trip_stop_order (trip_id, stop_order),
     UNIQUE KEY uq_trip_branch (trip_id, branch_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS trip_load_plans (
+    trip_id BIGINT UNSIGNED PRIMARY KEY,
+    source_hash CHAR(64) NOT NULL,
+    revision INT UNSIGNED NOT NULL DEFAULT 1,
+    payload_json LONGTEXT NOT NULL,
+    updated_by BIGINT UNSIGNED NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_load_plan_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+    CONSTRAINT fk_load_plan_user FOREIGN KEY (updated_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS settings (

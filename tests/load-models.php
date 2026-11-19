@@ -14,8 +14,7 @@ try {
         'cargo_length_cm' => '480',
         'cargo_width_cm' => '200',
         'cargo_height_cm' => '210',
-        'door_width_cm' => '190',
-        'door_height_cm' => '195',
+        'openings' => [['side' => 'rear', 'offset' => 5, 'width' => 190, 'sill' => 0, 'height' => 195]],
         'is_active' => 1,
     ], null);
     $boxId = BoxType::save([
@@ -31,7 +30,8 @@ try {
     ], null);
     $truck = Truck::find($truckId);
     $box = BoxType::find($boxId);
-    if (!$truck || !$box || $truck['body_type'] !== 'Closed van' || (float) $truck['cargo_length_cm'] !== 480.0 || (float) $box['weight_kg'] !== 5.0) {
+    if (!$truck || !$box || $truck['body_type'] !== 'Closed van' || (float) $truck['cargo_length_cm'] !== 480.0
+        || (float) $box['weight_kg'] !== 5.0 || Truck::openings($truck)[0]['width'] !== 190) {
         throw new RuntimeException('Load planning models did not round-trip through MySQL.');
     }
     echo "Load planning models passed.\n";
