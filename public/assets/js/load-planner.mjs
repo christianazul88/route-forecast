@@ -14,9 +14,10 @@ const capacityCheck = get('capacityCheck');
 const number = new Intl.NumberFormat('en-PH', {maximumFractionDigits: 2});
 const CM_PER_FOOT = 30.48;
 const fixedColors = ['#157c86', '#dd8434', '#6876c1', '#c4566c', '#4c9a5b', '#8a62ac', '#a7872c', '#3e88ba'];
-const deliveryStops = trip?.stops ?? (demo ? ['DEMO-BOC', 'DEMO-VAL'].map((code, index) => ({
-    id: index + 1, order: index + 1, name: demo[code],
-})) : [{id: 1, order: 1, name: 'Single delivery'}]);
+const deliveryStops = trip?.stops ?? (demo ? [
+    {id: 1, order: 1, name: 'First delivery'},
+    {id: 2, order: 2, name: 'Second delivery'},
+] : [{id: 1, order: 1, name: 'Single delivery'}]);
 const stopById = new Map(deliveryStops.map(stop => [stop.id, stop]));
 const stopName = stop => `${stop.order}. ${stop.name}`;
 const feet = cm => number.format(cm / CM_PER_FOOT);

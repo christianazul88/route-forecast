@@ -1,30 +1,11 @@
 <?php
 $defaultOrigin = null;
-$defaultDestination = null;
-$demoBranches = [];
+$warehouse = null;
 foreach ($branches as $branch) {
-    if (str_starts_with($branch['code'], 'DEMO-')) $demoBranches[$branch['code']] = (int) $branch['id'];
     if ($branch['is_origin']) {
         $defaultOrigin = (int) $branch['id'];
-    }
-    if ($branch['code'] === 'VAL-01') {
-        $defaultDestination = (int) $branch['id'];
-    }
-}
-$isDemo = ($_GET['demo'] ?? '') === '1' && isset($demoBranches['DEMO-GTG'], $demoBranches['DEMO-VAL']);
-if ($isDemo) {
-    $defaultOrigin = $demoBranches['DEMO-GTG'];
-    $defaultDestination = $demoBranches['DEMO-VAL'];
-}
-if ($defaultOrigin === null && $branches) {
-    $defaultOrigin = (int) $branches[0]['id'];
-}
-if ($defaultDestination === null) {
-    foreach ($branches as $branch) {
-        if ((int) $branch['id'] !== $defaultOrigin) {
-            $defaultDestination = (int) $branch['id'];
-            break;
-        }
+        $warehouse = $branch;
+        break;
     }
 }
 $mapBranches = array_map(static fn(array $branch): array => [
@@ -43,11 +24,13 @@ $mapBranches = array_map(static fn(array $branch): array => [
         <h1 class="display-6 fw-bold mb-1">Route Forecast</h1>
         <p class="text-secondary mb-0">Find branches along a truck route and preview the time added by extra stops.</p>
     </div>
-    <?php if ($demoAvailable): ?>
-        <a class="btn btn-outline-primary" href="<?= e(url('forecast', $isDemo ? [] : ['demo' => 1])) ?>"><?= $isDemo ? 'Back to usual route' : 'Try demo route' ?></a>
-    <?php endif; ?>
 </div>
-<?php if ($isDemo): ?><p class="alert alert-info">Demo route using public landmarks. Look for Bocaue Municipal Hall in the suggested stops.</p><?php endif; ?>
+<?php if (count($branches) < 2): ?>
+    <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span><?= $warehouse ? 'Add a delivery branch to plan a route from the warehouse.' : 'Add your warehouse and delivery branches to start planning routes.' ?></span>
+        <?php if (current_user()['role'] === 'Admin'): ?><a class="btn btn-sm btn-outline-primary" href="<?= e(url('branch_form')) ?>">Add branch</a><?php endif; ?>
+    </div>
+<?php endif; ?>
 
 <div class="row g-4 forecast-layout">
     <div class="col-lg-4">
@@ -55,21 +38,24 @@ $mapBranches = array_map(static fn(array $branch): array => [
             <h2 class="h5 fw-bold mb-3">Plan a route</h2>
             <div class="mb-3">
                 <label for="originBranch" class="form-label fw-semibold">Origin</label>
-                <select id="originBranch" class="form-select" <?= count($branches) < 2 ? 'disabled' : '' ?>>
+                <select id="originBranch" class="form-select" <?= !$branches ? 'disabled' : '' ?>>
+                    <option value="">Choose an origin</option>
                     <?php foreach ($branches as $branch): ?><option value="<?= (int) $branch['id'] ?>" <?= (int) $branch['id'] === $defaultOrigin ? 'selected' : '' ?>><?= e($branch['code'] . ' · ' . $branch['name']) ?></option><?php endforeach; ?>
                 </select>
+                <?php if ($warehouse): ?><p class="form-text">Warehouse address <?= e($warehouse['address']) ?></p><?php endif; ?>
             </div>
             <div class="mb-4">
                 <label for="destinationBranch" class="form-label fw-semibold">Main destination</label>
                 <select id="destinationBranch" class="form-select" <?= count($branches) < 2 ? 'disabled' : '' ?>>
-                    <?php foreach ($branches as $branch): ?><option value="<?= (int) $branch['id'] ?>" <?= (int) $branch['id'] === $defaultDestination ? 'selected' : '' ?>><?= e($branch['code'] . ' · ' . $branch['name']) ?></option><?php endforeach; ?>
+                    <option value="">Choose a delivery branch</option>
+                    <?php foreach (count($branches) >= 2 ? $branches : [] as $branch): ?><option value="<?= (int) $branch['id'] ?>"><?= e($branch['code'] . ' · ' . $branch['name']) ?></option><?php endforeach; ?>
                 </select>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <label for="corridorKm" class="form-label fw-semibold mb-0">Route corridor</label>
                 <strong id="corridorValue" class="text-primary">1.5 km</strong>
             </div>
-            <input id="corridorKm" class="form-range" type="range" min="0.5" max="5" step="0.1" value="<?= $isDemo ? '5' : '1.5' ?>">
+            <input id="corridorKm" class="form-range" type="range" min="0.5" max="5" step="0.1" value="1.5">
             <div class="d-flex justify-content-between text-secondary small"><span>0.5 km</span><span>5 km</span></div>
         </div></div>
 
@@ -93,7 +79,7 @@ $mapBranches = array_map(static fn(array $branch): array => [
             </form>
         </div></div>
 
-        <div id="forecastMessage" class="alert alert-info mb-0" role="status" aria-live="polite">Loading the direct route…</div>
+        <div id="forecastMessage" class="alert alert-info mb-0" role="status" aria-live="polite">Choose a delivery branch to preview the route.</div>
     </div>
 
     <div class="col-lg-8">
@@ -118,4 +104,4 @@ $mapBranches = array_map(static fn(array $branch): array => [
         </div></div>
     </div>
 </div>
-<?php $pageModule = 'forecast.js'; ?>
+<?php $pageModule = 'forecast.js?v=branches1'; ?>

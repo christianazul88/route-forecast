@@ -26,7 +26,8 @@ if (mapElement && typeof L !== 'undefined') {
   const recommendedMax = Number(mapElement.dataset.recommendedMax || 5);
   const marginalMax = Number(mapElement.dataset.marginalMax || 15);
 
-  const map = L.map(mapElement).setView([14.78, 120.96], 11);
+  const warehouse = branches.find(branch => branch.is_origin);
+  const map = L.map(mapElement).setView(warehouse ? [warehouse.lat, warehouse.lng] : [14.78, 120.96], warehouse ? 13 : 11);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -151,7 +152,7 @@ if (mapElement && typeof L !== 'undefined') {
     markerLayer.clearLayers();
     const originId = Number(originSelect.value);
     const destinationId = Number(destinationSelect.value);
-    for (const id of [originId, destinationId]) {
+    for (const id of new Set([originId, destinationId])) {
       const branch = branchById.get(id);
       if (!branch) continue;
       const isOrigin = id === originId;
@@ -311,15 +312,15 @@ if (mapElement && typeof L !== 'undefined') {
     updateSummary();
     const originId = Number(originSelect.value);
     const destinationId = Number(destinationSelect.value);
+    drawMarkers();
     if (!branchById.has(originId) || !branchById.has(destinationId)) {
-      showMessage('Add at least two active branches before planning a route.', 'warning');
+      showMessage(branches.length < 2 ? 'Add a delivery branch before planning a route.' : 'Choose an origin and delivery branch to preview the route.');
       return;
     }
     if (originId === destinationId) {
       showMessage('Choose different origin and destination branches.', 'warning');
       return;
     }
-    drawMarkers();
     showMessage('Loading the direct truck route…', 'info');
     try {
       const route = await requestRoute([originId, destinationId]);

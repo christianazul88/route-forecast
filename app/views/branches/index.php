@@ -1,10 +1,11 @@
 <div class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
     <div>
         <div class="eyebrow mb-2">MASTERFILE</div>
-        <h1 class="display-6 fw-bold mb-1">Branches</h1>
-        <p class="text-secondary mb-0">Delivery locations available for route planning.</p>
+        <h1 class="display-6 fw-bold mb-1"><?= $archived ? 'Archived branches' : 'Branches' ?></h1>
+        <p class="text-secondary mb-0"><?= $archived ? 'Inactive locations retained for trip history.' : 'Delivery locations available for route planning.' ?></p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="<?= e(url('branches', $archived ? [] : ['archived' => 1])) ?>"><?= $archived ? 'Active branches' : 'Archived branches' ?></a>
         <a class="btn btn-outline-primary" href="<?= e(url('branch_map')) ?>">View map</a>
         <?php if (current_user()['role'] === 'Admin'): ?><a class="btn btn-primary" href="<?= e(url('branch_form')) ?>">+ Add branch</a><?php endif; ?>
     </div>

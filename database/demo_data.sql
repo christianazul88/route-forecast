@@ -20,11 +20,3 @@ INSERT INTO box_types (code, name, shape, length_cm, width_cm, height_cm, weight
 ('DEMO-WRAP', '[Demo] Plastic-wrapped equipment', 'Irregular', 95, 55, 65, 18, 0, 1),
 ('DEMO-DRUM', '[Demo] Upright drum', 'Cylinder', 42, 42, 75, 21, 0, 1)
 ON DUPLICATE KEY UPDATE code = VALUES(code);
-
--- Public landmarks serve as training waypoints. They are not company facilities.
--- Guiguinto: DICT Municipalities Phase 2. Bocaue: OSM way 303432155.
-INSERT INTO branches (code, name, address, lat, lng, is_active, is_origin) VALUES
-('DEMO-GTG', '[Demo] Guiguinto Municipal Hall', 'MacArthur Highway, Poblacion, Guiguinto, Bulacan', 14.8275193, 120.8792138, 1, 0),
-('DEMO-BOC', '[Demo] Bocaue Municipal Hall', 'Igulot, Bocaue, Bulacan', 14.7938500, 120.9429500, 1, 0),
-('DEMO-VAL', '[Demo] Valenzuela City Hall', 'MacArthur Highway, Karuhatan, Valenzuela', 14.6922008, 120.9692500, 1, 0)
-ON DUPLICATE KEY UPDATE code = VALUES(code);

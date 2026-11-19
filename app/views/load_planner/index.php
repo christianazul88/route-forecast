@@ -1,6 +1,6 @@
 <?php
 $truckData = array_map([Truck::class, 'loadProfile'], $trucks);
-$demo = !$detail && ($_GET['demo'] ?? '') === '1' && count($demoStops) === 2;
+$demo = !$detail && ($_GET['demo'] ?? '') === '1' && $demoAvailable;
 $tripData = $detail ? [
     'id' => (int) $detail['trip']['id'], 'number' => $detail['trip']['trip_no'], 'status' => $detail['trip']['status'],
     'stops' => $context['stops'], 'hash' => $context['hash'],
@@ -24,16 +24,16 @@ $boxData = array_map(static fn(array $box): array => [
 <div class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
     <div><h1 class="display-6 fw-bold mb-1">Load planner</h1><p class="text-secondary mb-0">Plan what fits, the loading order, and which doors to use at each stop.</p></div>
     <div class="d-flex flex-wrap gap-2">
-        <?php if (!$detail && count($demoStops) === 2): ?><a class="btn btn-outline-primary" href="<?= e(url('load_planner', $demo ? [] : ['demo' => 1])) ?>"><?= $demo ? 'Start blank' : 'Try demo load' ?></a><?php endif; ?>
+        <?php if (!$detail && $demoAvailable): ?><a class="btn btn-outline-primary" href="<?= e(url('load_planner', $demo ? [] : ['demo' => 1])) ?>"><?= $demo ? 'Start blank' : 'Try demo load' ?></a><?php endif; ?>
         <a class="btn btn-outline-secondary" href="<?= e(url('boxes')) ?>">Box types</a>
     </div>
 </div>
-<?php if ($demo): ?><div class="alert alert-info">Training load for Bocaue and Valenzuela. Switch between the rear-only demo van, the two-door van, and the wing van to compare.</div><?php endif; ?>
+<?php if ($demo): ?><div class="alert alert-info">Practice loading for two stops. Switch between the demo vans and wing van to compare their openings.</div><?php endif; ?>
 <div id="loadPlanner"
     data-trucks="<?= e(json_encode($truckData, JSON_THROW_ON_ERROR)) ?>"
     data-boxes="<?= e(json_encode($boxData, JSON_THROW_ON_ERROR)) ?>"
     data-trip="<?= e(json_encode($tripData, JSON_THROW_ON_ERROR)) ?>"
-    data-demo="<?= e(json_encode($demo ? $demoStops : null, JSON_THROW_ON_ERROR)) ?>"
+    data-demo="<?= $demo ? 'true' : 'false' ?>"
     data-endpoint="<?= e(url('load_plan_save')) ?>"
     data-csrf="<?= e(csrf_token()) ?>">
     <div class="row g-4">
@@ -156,4 +156,4 @@ $boxData = array_map(static fn(array $box): array => [
     <p class="text-secondary small mt-4 mb-0">Planning estimate only. Cylinders use square footprints. Irregular items reserve a rectangular space and stay on the floor with the space above them clear. Check loading order, axle limits, securing space, and package strength before dispatch.</p>
 </div>
 <template id="loadRowTemplate"><div class="load-item-row border rounded-3 p-3 mb-2"><div class="row g-2 align-items-end"><div class="col-sm-7"><label class="form-label small fw-semibold">Package type</label><select class="form-select load-box-select"><option value="">Choose package</option><?php foreach ($boxes as $box): ?><option value="<?= (int) $box['id'] ?>"><?= e($box['code'] . ' · ' . $box['name']) ?></option><?php endforeach; ?><option value="custom">Custom dimensions…</option></select></div><div class="col-6 col-sm-3"><label class="form-label small fw-semibold">Quantity</label><input class="form-control load-quantity" type="number" min="1" max="10000" step="1" value="1"></div><div class="col-6 col-sm-2"><button type="button" class="btn btn-outline-danger w-100 load-remove" aria-label="Remove item">×</button></div></div><div class="load-box-details small text-secondary mt-2"></div><div class="load-custom-fields d-none mt-3 pt-3 border-top"><div class="row g-2"><div class="col-sm-7"><label class="form-label small">Item name</label><input class="form-control custom-name" maxlength="80" placeholder="e.g. appliance carton"></div><div class="col-sm-5"><label class="form-label small">Shape</label><select class="form-select custom-shape"><?php foreach (BoxType::SHAPES as $value => $label): ?><option value="<?= e($value) ?>"><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 small text-secondary custom-shape-hint"></div><div class="col-4"><label class="form-label small custom-length-label">Length (cm)</label><input class="form-control custom-length" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4 custom-width-wrap"><label class="form-label small">Width (cm)</label><input class="form-control custom-width" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4"><label class="form-label small">Height (cm)</label><input class="form-control custom-height" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-sm-6"><label class="form-label small">Weight each (kg)</label><input class="form-control custom-weight" type="number" min="0.001" step="0.001"></div><div class="col-sm-6 align-self-end"><div class="form-check mb-2"><input class="form-check-input custom-tilt" type="checkbox"><label class="form-check-label small">May be placed on its side</label></div></div></div></div></div></template>
-<?php $pageModule = 'load-planner.mjs?v=load2'; ?>
+<?php $pageModule = 'load-planner.mjs?v=branches1'; ?>

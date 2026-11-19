@@ -20,15 +20,11 @@ final class LoadPlanController
             if (!in_array($selectedTruck, array_map('intval', array_column($trucks, 'id')), true)) $trucks[] = $truck;
             $saved = LoadPlan::find($tripId);
         }
-        $demoStops = [];
-        foreach (Branch::active() as $branch) {
-            if (in_array($branch['code'], ['DEMO-BOC', 'DEMO-VAL'], true)) {
-                $demoStops[$branch['code']] = $branch['name'];
-            }
-        }
+        $demoAvailable = in_array('DEMO-CV16', array_column($trucks, 'plate_no'), true)
+            && in_array('DEMO-CARTON', array_column($boxes, 'code'), true);
         $trips = db()->query("SELECT id, trip_no, trip_date FROM trips WHERE status = 'Planned'
             ORDER BY trip_date DESC, id DESC LIMIT 30")->fetchAll();
-        render('load_planner/index', compact('trucks', 'boxes', 'selectedTruck', 'detail', 'context', 'saved', 'trips', 'demoStops') + [
+        render('load_planner/index', compact('trucks', 'boxes', 'selectedTruck', 'detail', 'context', 'saved', 'trips', 'demoAvailable') + [
             'title' => 'Load planner',
         ]);
     }

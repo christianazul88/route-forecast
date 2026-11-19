@@ -144,16 +144,3 @@ INSERT INTO settings (setting_key, setting_value, description) VALUES
 ('marginal_max_min', '15', 'Detour up to this many minutes is marginal'),
 ('ors_cache_hours', '168', 'Directions cache lifetime in hours')
 ON DUPLICATE KEY UPDATE description = VALUES(description);
-
-INSERT INTO branches (code, name, address, lat, lng, contact_person, contact_no, is_active, is_origin) VALUES
-('WH-GTG', 'Guiguinto Warehouse', 'Guiguinto, Bulacan', 14.8342000, 120.8808000, 'Warehouse Dispatch', '0917-000-0101', 1, 1),
-('VAL-01', 'Valenzuela Branch', 'MacArthur Highway, Valenzuela City', 14.7040000, 120.9850000, 'Valenzuela Supervisor', '0917-000-0102', 1, 0),
-('BAL-01', 'Balagtas Branch', 'Balagtas, Bulacan', 14.8160000, 120.9100000, 'Balagtas Supervisor', '0917-000-0103', 1, 0),
-('BOC-01', 'Bocaue Branch', 'Bocaue, Bulacan', 14.8000000, 120.9260000, 'Bocaue Supervisor', '0917-000-0104', 1, 0),
-('MAR-01', 'Marilao Branch', 'Marilao, Bulacan', 14.7580000, 120.9470000, 'Marilao Supervisor', '0917-000-0105', 1, 0),
-('MEY-01', 'Meycauayan Branch', 'Meycauayan, Bulacan', 14.7330000, 120.9600000, 'Meycauayan Supervisor', '0917-000-0106', 1, 0),
-('MAL-01', 'Malolos Branch', 'Malolos, Bulacan', 14.8440000, 120.8110000, 'Malolos Supervisor', '0917-000-0107', 1, 0),
-('SJD-01', 'San Jose del Monte Branch', 'San Jose del Monte, Bulacan', 14.8130000, 121.0450000, 'SJDM Supervisor', '0917-000-0108', 1, 0),
-('CAL-01', 'Caloocan Branch', 'Monumento, Caloocan City', 14.6570000, 120.9820000, 'Caloocan Supervisor', '0917-000-0109', 1, 0),
-('NAV-01', 'Navotas Branch', 'Navotas City', 14.6650000, 120.9470000, 'Navotas Supervisor', '0917-000-0110', 1, 0)
-ON DUPLICATE KEY UPDATE code = VALUES(code);

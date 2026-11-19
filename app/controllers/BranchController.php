@@ -6,13 +6,15 @@ final class BranchController
     public static function index(): void
     {
         require_login();
-        render('branches/index', ['title' => 'Branches', 'branches' => Branch::all()]);
+        $archived = ($_GET['archived'] ?? '') === '1';
+        $branches = array_filter(Branch::all(), static fn(array $branch): bool => (bool) $branch['is_active'] !== $archived);
+        render('branches/index', ['title' => $archived ? 'Archived branches' : 'Branches', 'branches' => $branches, 'archived' => $archived]);
     }
 
     public static function map(): void
     {
         require_login();
-        render('branches/map', ['title' => 'Branch map', 'branches' => Branch::all(), 'mapAssets' => true]);
+        render('branches/map', ['title' => 'Branch map', 'branches' => Branch::active(), 'mapAssets' => true]);
     }
 
     public static function form(): void
