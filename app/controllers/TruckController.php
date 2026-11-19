@@ -35,6 +35,7 @@ final class TruckController
             'name' => trim((string) ($_POST['name'] ?? '')),
             'body_type' => trim((string) ($_POST['body_type'] ?? '')),
             'capacity_kg' => trim((string) ($_POST['capacity_kg'] ?? '')),
+            'diesel_km_per_liter' => trim((string) ($_POST['diesel_km_per_liter'] ?? '')),
             'cargo_length_ft' => trim((string) ($_POST['cargo_length_ft'] ?? '')),
             'cargo_width_ft' => trim((string) ($_POST['cargo_width_ft'] ?? '')),
             'cargo_height_ft' => trim((string) ($_POST['cargo_height_ft'] ?? '')),
@@ -53,6 +54,10 @@ final class TruckController
         }
         if (!is_numeric($truck['capacity_kg']) || (float) $truck['capacity_kg'] <= 0 || (float) $truck['capacity_kg'] > 99999999.99) {
             $errors[] = 'Capacity must be a positive number of kilograms.';
+        }
+        $efficiency = $truck['diesel_km_per_liter'];
+        if ($efficiency !== '' && (!is_numeric($efficiency) || (float) $efficiency < 0.1 || (float) $efficiency > 100)) {
+            $errors[] = 'Enter a measured diesel efficiency between 0.1 and 100 km/L.';
         }
         $filledCargo = 0;
         foreach (['length', 'width', 'height'] as $axis) {

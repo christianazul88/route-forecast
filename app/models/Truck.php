@@ -59,15 +59,16 @@ final class Truck
     {
         $fields = [
             $data['plate_no'], $data['name'], $data['body_type'], $data['capacity_kg'],
+            ($data['diesel_km_per_liter'] ?? '') === '' ? null : $data['diesel_km_per_liter'],
             $data['cargo_length_cm'], $data['cargo_width_cm'], $data['cargo_height_cm'],
             json_encode($data['openings'], JSON_THROW_ON_ERROR), $data['is_active'],
         ];
         if ($id === null) {
-            $statement = db()->prepare('INSERT INTO trucks (plate_no, name, body_type, capacity_kg, cargo_length_cm, cargo_width_cm, cargo_height_cm, openings_json, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $statement = db()->prepare('INSERT INTO trucks (plate_no, name, body_type, capacity_kg, diesel_km_per_liter, cargo_length_cm, cargo_width_cm, cargo_height_cm, openings_json, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $statement->execute($fields);
             $id = (int) db()->lastInsertId();
         } else {
-            $statement = db()->prepare('UPDATE trucks SET plate_no = ?, name = ?, body_type = ?, capacity_kg = ?, cargo_length_cm = ?, cargo_width_cm = ?, cargo_height_cm = ?, openings_json = ?, is_active = ? WHERE id = ?');
+            $statement = db()->prepare('UPDATE trucks SET plate_no = ?, name = ?, body_type = ?, capacity_kg = ?, diesel_km_per_liter = ?, cargo_length_cm = ?, cargo_width_cm = ?, cargo_height_cm = ?, openings_json = ?, is_active = ? WHERE id = ?');
             $statement->execute([...$fields, $id]);
         }
         audit('save', 'truck', $id, ['plate_no' => $data['plate_no']]);

@@ -26,6 +26,7 @@
                 <a class="nav-link <?= ($page ?? '') === 'branch_map' ? 'active' : '' ?>" href="<?= e(url('branch_map')) ?>">Branch map</a>
                 <a class="nav-link <?= in_array($page ?? '', ['trucks', 'truck_form'], true) ? 'active' : '' ?>" href="<?= e(url('trucks')) ?>">Trucks</a>
                 <a class="nav-link <?= ($page ?? '') === 'load_planner' ? 'active' : '' ?>" href="<?= e(url('load_planner')) ?>">Load planner</a>
+                <a class="nav-link <?= ($page ?? '') === 'fuel' ? 'active' : '' ?>" href="<?= e(url('fuel')) ?>">Fuel</a>
                 <a class="nav-link <?= in_array($page ?? '', ['boxes', 'box_form'], true) ? 'active' : '' ?>" href="<?= e(url('boxes')) ?>">Box types</a>
             </div>
             <span class="navbar-text me-3 small"><?= e(current_user()['full_name']) ?> <span class="role-pill"><?= e(current_user()['role']) ?></span></span>

@@ -4,6 +4,8 @@ PHP/MySQL logistics planning app for routes from the Guiguinto warehouse. Planne
 
 The load planner estimates how many mixed packages fit in a measured truck cargo bay and how many more of each package type could be added.
 
+The fuel planner estimates trip kilometers, diesel consumption, and fuel cost, with an optional return to the warehouse.
+
 ## Requirements
 
 - PHP 8.0+ with PDO MySQL, cURL, and mbstring; MySQL/MariaDB
@@ -35,6 +37,7 @@ For a database created before truck body types were added, run `database/migrati
 For a database created before irregular packages were added, apply `database/migrations/006_irregular_packages.sql` before updating the app. Existing package records keep their original shape.
 For a database created before trip load plans, apply `database/migrations/007_trip_load_plans.sql`. A legacy opening appears as a centered rear opening until an Admin confirms it in Trucks. Import `database/demo_data.sql` for the training examples.
 For a database with the original example locations, apply `database/migrations/008_archive_sample_branches.sql` to retire the sample branches and preserve trip history.
+For a database created before the fuel planner, apply `database/migrations/009_fuel_planner.sql` before updating the app.
 
 Admin users can add, edit, and archive branches and trucks. Planner users can view them. Archiving keeps references intact for trip history. Open **Archived branches** to review a location. The origin warehouse cannot be archived.
 
@@ -57,6 +60,15 @@ Change the thresholds or cache lifetime in the `settings` table (`recommended_ma
 Choose an active truck, driver, and date on Route Forecast. Save a direct route or recalculate after selecting optional stops, then save. The server reloads route geometry and distances from the ORS cache or API before storing the trip. The browser's displayed numbers are not trusted for saved records.
 
 The dashboard shows today's trips, trips in the next seven days, and counts by status. The trips list filters by date range, status, and truck. A trip detail page draws its saved geometry without calling ORS again. Statuses follow `Planned → Dispatched → Completed`, with cancellation allowed from Planned or Dispatched. The print sheet and CSV include ordered branch addresses, contacts, per-leg distances and times when ORS provides them, optional-stop detours, and trip totals. Driving times exclude loading and unloading.
+
+## Fuel planner
+
+1. In **Trucks**, an Admin can save the measured diesel efficiency in km/L for each truck. Planners can adjust it for each estimate.
+2. Open **Fuel estimate** on a saved trip to use its distance through the delivery stops. Choose **One way** or **Return to warehouse**. The return is a separate truck route from the final delivery to the active warehouse. Enter a known return distance when routing is unavailable. You can enter a separate return efficiency when the truck’s load changes.
+3. Enter a dated diesel price in pesos per liter and the station or published source. An Admin can record a team price from **Fuel**. The latest observed team price prefills new estimates. Check the current pump price before using an older entry.
+4. Calculate the estimated distance, liters and cost. On a planned or dispatched trip, you can save the estimate with the price and route distances used. The **Fuel** menu also offers a standalone estimate with manually entered distances.
+
+Use a station quote, receipt, or the [DOE North Luzon pump price reports](https://doe.gov.ph/data-and-prices/liquid-fuels/retail-pump-prices/north-luzon-pump-prices) for the rate. The app records entered prices and calculates estimates. Actual diesel use varies with vehicle load, driving conditions, and idling.
 
 ## Load planner
 

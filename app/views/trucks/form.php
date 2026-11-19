@@ -17,6 +17,11 @@ $openingFields = $truck['opening_fields'] ?? array_map(static fn(array $opening)
         <div class="col-md-6"><label for="name" class="form-label">Truck name <span class="text-danger">*</span></label><input id="name" name="name" class="form-control" value="<?= e((string) ($truck['name'] ?? '')) ?>" maxlength="120" required></div>
         <div class="col-md-6"><label for="body_type" class="form-label">Body type <span class="text-danger">*</span></label><select id="body_type" name="body_type" class="form-select" required><option value="">Choose body type</option><?php foreach (Truck::BODY_TYPES as $bodyType): ?><option value="<?= e($bodyType) ?>" <?= ($truck['body_type'] ?? '') === $bodyType ? 'selected' : '' ?>><?= e($bodyType) ?></option><?php endforeach; ?></select></div>
         <div class="col-md-6"><label for="capacity_kg" class="form-label">Capacity (kg) <span class="text-danger">*</span></label><input id="capacity_kg" name="capacity_kg" type="number" min="0.01" step="0.01" class="form-control" value="<?= e((string) ($truck['capacity_kg'] ?? '')) ?>" required></div>
+        <div class="col-md-6">
+            <label for="diesel_km_per_liter" class="form-label">Diesel efficiency (km/L)</label>
+            <input id="diesel_km_per_liter" name="diesel_km_per_liter" type="number" inputmode="decimal" min="0.10" max="100" step="0.01" class="form-control" value="<?= e((string) ($truck['diesel_km_per_liter'] ?? '')) ?>">
+            <div class="form-text">Optional. Use the measured distance divided by liters refilled.</div>
+        </div>
         <div class="col-12 mt-4"><h2 class="h6 fw-bold mb-1">Usable cargo space</h2><p class="small text-secondary mb-0">A nominal body length is a starting point. Measure the actual clear interior and enter the rated payload for this plate.</p></div>
         <div class="col-md-6">
             <label class="form-label" for="truckPreset">Nominal body length</label>
