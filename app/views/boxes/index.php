@@ -4,7 +4,7 @@
 </div>
 <div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Code</th><th>Package</th><th>Shape</th><th>Dimensions</th><th>Each</th><th>Status</th><th class="text-end">Actions</th></tr></thead><tbody>
 <?php foreach ($boxes as $box): ?><tr>
-    <td class="fw-semibold"><?= e($box['code']) ?></td><td><?= e($box['name']) ?></td><td><?= e($box['shape']) ?></td>
+    <td class="fw-semibold"><?= e($box['code']) ?></td><td><?= e($box['name']) ?></td><td><?= e(BoxType::SHAPES[$box['shape']] ?? $box['shape']) ?></td>
     <td class="text-nowrap"><?php if ($box['shape'] === 'Cylinder'): ?>Ø <?= e(number_format((float) $box['length_cm'], 1)) ?> × <?= e(number_format((float) $box['height_cm'], 1)) ?> cm<?php else: ?><?= e(number_format((float) $box['length_cm'], 1)) ?> × <?= e(number_format((float) $box['width_cm'], 1)) ?> × <?= e(number_format((float) $box['height_cm'], 1)) ?> cm<?php endif; ?></td>
     <td><?= e(number_format((float) $box['weight_kg'], 3)) ?> kg</td>
     <td><span class="badge <?= $box['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $box['is_active'] ? 'Active' : 'Inactive' ?></span></td>

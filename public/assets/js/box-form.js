@@ -14,7 +14,9 @@
         tilt.disabled = cylinder;
         hint.textContent = cylinder
             ? 'Cylinders are planned upright inside a square footprint equal to their diameter.'
-            : 'Measure the outside dimensions of the packed box, including any bulge.';
+            : shape.value === 'Irregular'
+                ? 'Measure the smallest rectangular space that encloses the wrapped item, including protrusions. The planner keeps these items on the floor and leaves the space directly above them clear.'
+                : 'Measure the outside dimensions of the packed box, including any bulge.';
     }
     shape.addEventListener('change', update);
     update();

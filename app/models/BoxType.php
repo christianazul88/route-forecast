@@ -3,6 +3,12 @@ declare(strict_types=1);
 
 final class BoxType
 {
+    public const SHAPES = [
+        'Box' => 'Rectangular box',
+        'Cylinder' => 'Upright cylinder',
+        'Irregular' => 'Irregular or wrapped item',
+    ];
+
     public static function active(): array
     {
         return db()->query('SELECT id, code, name, shape, length_cm, width_cm, height_cm, weight_kg, can_tilt FROM box_types WHERE is_active = 1 ORDER BY name, code')->fetchAll();

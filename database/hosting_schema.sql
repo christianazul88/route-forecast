@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS box_types (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(30) NOT NULL UNIQUE,
     name VARCHAR(150) NOT NULL,
-    shape ENUM('Box', 'Cylinder') NOT NULL DEFAULT 'Box',
+    shape ENUM('Box', 'Cylinder', 'Irregular') NOT NULL DEFAULT 'Box',
     length_cm DECIMAL(8,2) NOT NULL,
     width_cm DECIMAL(8,2) NOT NULL,
     height_cm DECIMAL(8,2) NOT NULL,

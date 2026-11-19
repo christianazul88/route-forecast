@@ -29,7 +29,7 @@ export function createLoadState(truck, clearance = 2) {
         volume: length * width * height,
         placed: 0,
         spaces: [{x: 0, y: 0, z: 0, l: length, w: width, h: height}],
-        floorRows: [],
+        placements: [],
     };
 }
 
@@ -37,7 +37,7 @@ export function cloneLoadState(state) {
     return {
         ...state,
         spaces: state.spaces.map(space => ({...space})),
-        floorRows: state.floorRows.map(row => ({...row})),
+        placements: [],
     };
 }
 
@@ -65,12 +65,13 @@ function addSpace(spaces, space) {
     if (space.l > EPS && space.w > EPS && space.h > EPS) spaces.push(space);
 }
 
-export function packInto(state, box, requested, maxRows = 4000) {
+export function packInto(state, box, requested, maxRows = 4000, recordPlacements = true) {
     if (!Number.isSafeInteger(requested) || requested < 0 || requested > 10000) {
         throw new Error('Quantity must be a whole number from 0 to 10,000.');
     }
     const options = orientations(box, state);
     if (options.length === 0) return {placed: 0, reason: 'Cannot pass through the door'};
+    const floorOnly = box.shape === 'Irregular';
     let placed = 0;
     let rows = 0;
     while (placed < requested && rows < maxRows) {
@@ -79,10 +80,11 @@ export function packInto(state, box, requested, maxRows = 4000) {
         let best = null;
         for (let i = 0; i < state.spaces.length; i++) {
             const space = state.spaces[i];
+            if (floorOnly && space.z > EPS) continue;
             for (const orientation of options) {
                 const nx = Math.floor((space.l + EPS) / orientation.l);
                 const ny = Math.floor((space.w + EPS) / orientation.w);
-                const nz = Math.floor((space.h + EPS) / orientation.h);
+                const nz = floorOnly ? Number(space.h + EPS >= orientation.h) : Math.floor((space.h + EPS) / orientation.h);
                 if (nx < 1 || ny < 1 || nz < 1) continue;
                 const potential = Math.min(requested - placed, byWeight, nx * ny * nz);
                 if (potential <= 0) continue;
@@ -101,9 +103,11 @@ export function packInto(state, box, requested, maxRows = 4000) {
         const usedH = best.orientation.h;
         addSpace(state.spaces, {x: space.x + usedL, y: space.y, z: space.z, l: space.l - usedL, w: space.w, h: space.h});
         addSpace(state.spaces, {x: space.x, y: space.y + usedW, z: space.z, l: usedL, w: space.w - usedW, h: space.h});
-        addSpace(state.spaces, {x: space.x, y: space.y, z: space.z + usedH, l: usedL, w: usedW, h: space.h - usedH});
-        if (Math.abs(space.z) < EPS && state.floorRows.length < 150) {
-            state.floorRows.push({x: space.x, y: space.y, l: usedL, w: usedW, boxId: box.id, count});
+        if (!floorOnly) {
+            addSpace(state.spaces, {x: space.x, y: space.y, z: space.z + usedH, l: usedL, w: usedW, h: space.h - usedH});
+        }
+        if (recordPlacements) {
+            state.placements.push({x: space.x, y: space.y, z: space.z, l: best.orientation.l, w: usedW, h: usedH, boxId: box.id, count});
         }
         placed += count;
         state.placed += count;
@@ -114,7 +118,8 @@ export function packInto(state, box, requested, maxRows = 4000) {
     let reason = '';
     if (placed < requested) {
         reason = rows >= maxRows ? 'Estimate reached planning limit'
-            : state.capacity - state.weight + EPS < box.weight ? 'Payload limit' : 'Available space or shape';
+            : state.capacity - state.weight + EPS < box.weight ? 'Payload limit'
+                : floorOnly ? 'Available floor space or shape' : 'Available space or shape';
     }
     return {placed, reason};
 }

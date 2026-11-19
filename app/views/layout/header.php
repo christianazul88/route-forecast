@@ -9,7 +9,7 @@
     <?php if (!empty($mapAssets)): ?>
     <link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
     <?php endif; ?>
-    <link href="<?= e(asset('css/app.css')) ?>" rel="stylesheet">
+    <link href="<?= e(asset('css/app.css?v=3d1')) ?>" rel="stylesheet">
 </head>
 <body>
 <?php if (current_user()): ?>

@@ -1,4 +1,5 @@
-import {createLoadState, cloneLoadState, packInto} from './load-packing.mjs';
+import {createLoadState, cloneLoadState, packInto} from './load-packing.mjs?v=3d1';
+import {createLoadView, renderLoadFloor} from './load-view.mjs';
 
 const root = document.getElementById('loadPlanner');
 if (root) {
@@ -11,6 +12,15 @@ if (root) {
     const message = document.getElementById('loadMessage');
     const number = new Intl.NumberFormat('en-PH', {maximumFractionDigits: 3});
     const colors = ['#147d86', '#e39b37', '#6f73bb', '#d36d73', '#4f9b67', '#8d74a7', '#667f93'];
+    const control = id => document.getElementById(id);
+    const view3d = control('view3d');
+    const viewFloor = control('viewFloor');
+    const level = control('cargoLevel');
+    const placement = control('cargoPlacement');
+    const yaw = control('cargoTurn');
+    const elevation = control('cargoTilt');
+    let scene;
+    let layout;
     let nextRowId = 1;
     let timer;
     let initializing = true;
@@ -86,6 +96,9 @@ if (root) {
             element.querySelector('.custom-width-wrap').classList.toggle('d-none', cylinder);
             element.querySelector('.custom-length-label').textContent = cylinder ? 'Diameter (cm)' : 'Length (cm)';
             element.querySelector('.custom-tilt').disabled = cylinder;
+            element.querySelector('.custom-shape-hint').textContent = shape.value === 'Irregular'
+                ? 'Use the smallest rectangular space that encloses the item. The space directly above it stays clear.'
+                : '';
             schedule();
         }
         function updateDetails() {
@@ -93,7 +106,7 @@ if (root) {
             const isCustom = select.value === 'custom';
             custom.classList.toggle('d-none', !isCustom);
             details.textContent = isCustom ? 'Enter outside dimensions and weight for this one-off item.'
-                : box ? `${dimensions(box)} · ${number.format(box.weight)} kg each${box.canTilt ? ' · may be tilted' : ' · upright only'}` : '';
+                : box ? `${dimensions(box)} · ${number.format(box.weight)} kg each${box.canTilt ? ' · may be tilted' : ' · upright only'}${box.shape === 'Irregular' ? ' · floor only' : ''}` : '';
             schedule();
         }
         select.addEventListener('change', updateDetails);
@@ -123,7 +136,7 @@ if (root) {
             id: `custom-${element.dataset.rowId}`,
             name: element.querySelector('.custom-name').value.trim() || `Custom ${shape.toLowerCase()} ${element.dataset.rowId}`,
             shape, length, width, height, weight,
-            canTilt: shape === 'Box' && element.querySelector('.custom-tilt').checked,
+            canTilt: shape !== 'Cylinder' && element.querySelector('.custom-tilt').checked,
         };
         boxById.set(String(box.id), box);
         return box;
@@ -136,48 +149,88 @@ if (root) {
         row.append(cell);
     }
 
-    function renderFloor(state) {
-        const floor = document.getElementById('loadFloor');
-        const legend = document.getElementById('floorLegend');
-        floor.replaceChildren();
+    function renderLayout(state) {
+        const legend = control('floorLegend');
         legend.replaceChildren();
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', `0 0 ${state.length} ${state.width}`);
-        svg.setAttribute('role', 'img');
-        svg.setAttribute('aria-label', 'Top view of planned packages on the truck floor');
-        svg.classList.add('load-floor-svg');
-        const usedIds = [...new Set(state.floorRows.map(row => row.boxId))];
+        const usedIds = [...new Set(state.placements.map(row => row.boxId))];
         const colorById = new Map(usedIds.map((id, index) => [id, colors[index % colors.length]]));
-        for (const row of state.floorRows) {
-            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            rect.setAttribute('x', String(row.x));
-            rect.setAttribute('y', String(row.y));
-            rect.setAttribute('width', String(row.l));
-            rect.setAttribute('height', String(row.w));
-            rect.setAttribute('fill', colorById.get(row.boxId));
-            rect.setAttribute('stroke', '#fff');
-            rect.setAttribute('stroke-width', '1.5');
-            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-            title.textContent = `${boxById.get(String(row.boxId))?.name ?? 'Package'} · ${row.count} in this row`;
-            rect.append(title);
-            svg.append(rect);
-        }
-        floor.append(svg);
+        const packages = new Map(usedIds.map(id => [id, boxById.get(String(id))]));
         for (const id of usedIds) {
+            const box = packages.get(id);
             const item = document.createElement('span');
             item.className = 'me-3 d-inline-block';
             const swatch = document.createElement('span');
             swatch.className = 'load-swatch';
             swatch.style.backgroundColor = colorById.get(id);
-            item.append(swatch, document.createTextNode(boxById.get(String(id))?.name ?? 'Package'));
+            item.append(swatch, document.createTextNode(box.name + (box.shape === 'Irregular' ? ' (reserved space)' : '')));
             legend.append(item);
         }
-        if (!state.floorRows.length) {
-            const note = document.createElement('p');
-            note.className = 'small text-secondary mb-0';
-            note.textContent = 'No packages on the floor yet.';
-            legend.append(note);
+        layout = {state, colorById, packages};
+        renderLoadFloor(control('loadFloor'), state, colorById);
+        const currentLevel = level.value;
+        const heights = [...new Set(state.placements.map(row => Math.round(row.z * 1e6) / 1e6))].sort((a, b) => a - b);
+        level.replaceChildren(new Option('All levels', ''),
+            ...heights.map(height => new Option(height === 0 ? 'Floor layer' : `${number.format(height)} cm above floor`, height)));
+        level.value = heights.some(height => String(height) === currentLevel) ? currentLevel : '';
+        level.disabled = heights.length < 2;
+        if (scene === undefined) {
+            try {
+                scene = createLoadView(control('loadCanvas'), control('cargoCab'), control('cargoRear'));
+            } catch {
+                scene = null;
+            }
+            if (!scene) {
+                view3d.disabled = true;
+                showView(false);
+                control('cargoViewNote').textContent = '3D is unavailable on this browser. The floor view is shown below.';
+                control('loadFloor').before(control('cargoViewNote'));
+            }
         }
+        control('cargoPlaceholder').hidden = true;
+        control('cargoControls').hidden = false;
+        updatePlacements();
+    }
+
+    function updatePlacements() {
+        if (!layout) return;
+        const {state, packages} = layout;
+        const limit = level.value === '' ? Infinity : Number(level.value) + .000001;
+        const current = placement.value;
+        const options = [new Option('Choose a row of packages', '')];
+        for (const [index, row] of state.placements.entries()) {
+            if (row.z > limit) continue;
+            const name = packages.get(row.boxId).name;
+            options.push(new Option(`${index + 1}. ${name} × ${row.count} at ${number.format(row.z)} cm high`, index));
+        }
+        placement.replaceChildren(...options);
+        placement.value = options.some(option => option.value === current) ? current : '';
+        control('cargoInspector').hidden = options.length < 2;
+        updateScene();
+    }
+
+    function updateScene() {
+        if (!layout) return;
+        const {state, colorById, packages} = layout;
+        const limit = level.value === '' ? Infinity : Number(level.value) + .000001;
+        const visible = state.placements.filter(row => row.z <= limit);
+        const row = placement.value === '' ? null : state.placements[Number(placement.value)];
+        if (scene) {
+            const grouped = scene.setLoad(state, visible, colorById, packages, row);
+            control('cargoViewNote').textContent = grouped ? 'Large loads show adjoining items grouped into rows.' : '';
+        }
+        control('cargoPlacementDetail').textContent = row
+            ? `Start in usable cargo space: ${number.format(row.x)} cm from the cab end, ${number.format(row.y)} cm from the reference side, ${number.format(row.z)} cm above the floor. Each item occupies ${[row.l, row.w, row.h].map(n => number.format(n)).join(' × ')} cm along the truck’s length, width and height.`
+            : '';
+    }
+
+    function showView(use3d) {
+        control('cargo3d').hidden = !use3d;
+        control('cargoFloor').hidden = use3d;
+        view3d.classList.toggle('active', use3d);
+        viewFloor.classList.toggle('active', !use3d);
+        view3d.setAttribute('aria-pressed', String(use3d));
+        viewFloor.setAttribute('aria-pressed', String(!use3d));
+        if (use3d) scene?.redraw();
     }
 
     function calculate() {
@@ -207,8 +260,9 @@ if (root) {
             entries.push({rowId: element.dataset.rowId, box, quantity});
         }
         const results = new Map();
+        const volume = box => box.length * box.width * box.height;
         const sorted = [...entries].sort((a, b) =>
-            b.box.length * b.box.width * b.box.height - a.box.length * a.box.width * a.box.height);
+            Number(b.box.shape === 'Irregular') - Number(a.box.shape === 'Irregular') || volume(b.box) - volume(a.box));
         for (const entry of sorted) {
             results.set(entry.rowId, packInto(state, entry.box, entry.quantity));
         }
@@ -221,7 +275,7 @@ if (root) {
         document.getElementById('spacePercent').textContent = `${number.format(percent)}%`;
         document.getElementById('spaceBar').style.width = `${percent}%`;
         document.getElementById('spaceText').textContent = `${number.format(state.envelopeVolume / 1_000_000)} m³ of ${number.format(state.volume / 1_000_000)} m³ reserved by package footprints. Open pockets may be too small for another box.`;
-        renderFloor(state);
+        renderLayout(state);
 
         const plannedBody = document.getElementById('plannedResult');
         plannedBody.replaceChildren();
@@ -248,7 +302,7 @@ if (root) {
             const copy = cloneLoadState(state);
             const theoretical = Math.floor((copy.volume - copy.envelopeVolume + 1e-7) / (box.length * box.width * box.height));
             const limit = Math.max(0, Math.min(10000, theoretical));
-            const extra = packInto(copy, box, limit).placed;
+            const extra = packInto(copy, box, limit, 4000, false).placed;
             const row = document.createElement('tr');
             addCell(row, box.name);
             addCell(row, dimensions(box));
@@ -272,6 +326,18 @@ if (root) {
     document.getElementById('wallClearance').addEventListener('input', schedule);
     document.querySelectorAll('.custom-truck-field').forEach(input => input.addEventListener('input', schedule));
     truckSelect.addEventListener('change', schedule);
+    view3d.addEventListener('click', () => showView(true));
+    viewFloor.addEventListener('click', () => showView(false));
+    level.addEventListener('change', updatePlacements);
+    placement.addEventListener('change', updateScene);
+    const rotate = () => scene?.rotate(Number(yaw.value), Number(elevation.value));
+    yaw.addEventListener('input', rotate);
+    elevation.addEventListener('input', rotate);
+    control('cargoReset').addEventListener('click', () => {
+        yaw.value = yaw.defaultValue;
+        elevation.value = elevation.defaultValue;
+        rotate();
+    });
     showTruck();
     addRow();
     initializing = false;

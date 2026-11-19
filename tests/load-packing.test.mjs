@@ -40,4 +40,23 @@ const truck = (overrides = {}) => ({length: 2, width: 2, height: 2, capacity: 10
     assert.equal(packInto(state, box({shape: 'Cylinder', length: 1, width: 1}), 20).placed, 9);
 }
 
+{
+    const state = createLoadState(truck({length: 2, width: 1, height: 3}), 0);
+    const wrapped = box({id: 'wrapped', shape: 'Irregular'});
+    assert.equal(packInto(state, wrapped, 1).placed, 1);
+    assert.equal(packInto(state, box(), 5).placed, 3);
+    assert.deepEqual(state.placements.map(({x, z, count}) => [x, z, count]),
+        [[0, 0, 1], [1, 0, 1], [1, 1, 1], [1, 2, 1]]);
+    const copy = cloneLoadState(state);
+    assert.equal(packInto(copy, wrapped, 1).placed, 0);
+}
+
+{
+    const state = createLoadState(truck({length: 3, width: 2, height: 1}), 0);
+    const wrapped = box({shape: 'Irregular', length: 1, width: 1, height: 2, canTilt: true});
+    assert.equal(packInto(state, wrapped, 1).placed, 1);
+    assert.equal(state.placements[0].h, 1);
+    assert.equal(state.placements[0].l * state.placements[0].w, 2);
+}
+
 console.log('Load packing scenarios passed.');

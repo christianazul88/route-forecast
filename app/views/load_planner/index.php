@@ -51,7 +51,7 @@ $boxData = array_map(static fn(array $box): array => [
             </div></div>
             <div class="card border-0 shadow-sm"><div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2"><h2 class="h5 fw-bold mb-0">Planned goods</h2><button id="addLoadRow" type="button" class="btn btn-sm btn-outline-primary">+ Add item</button></div>
-                <p class="text-secondary small">Choose a saved package or enter one-off dimensions. The planner fills larger packages first.</p>
+                <p class="text-secondary small">Choose a saved package or enter one-off dimensions. Floor-only items are placed first, then larger packages.</p>
                 <div id="loadRows"></div>
                 <button id="calculateLoad" type="button" class="btn btn-primary w-100 mt-3">Estimate load</button>
             </div></div>
@@ -66,10 +66,38 @@ $boxData = array_map(static fn(array $box): array => [
                 <div class="d-flex justify-content-between gap-2"><h2 class="h5 fw-bold">Space used</h2><strong id="spacePercent">—</strong></div>
                 <div class="progress mb-3" role="progressbar" aria-label="Cargo envelope volume used"><div id="spaceBar" class="progress-bar" style="width: 0%"></div></div>
                 <div id="spaceText" class="small text-secondary"></div>
-                <div class="d-flex justify-content-between align-items-center mt-4 mb-2"><h3 class="h6 fw-bold mb-0">Floor view</h3><span class="text-secondary small">first layer only</span></div>
-                <div id="loadFloor" class="load-floor"><div class="text-secondary small text-center py-5">No load calculated.</div></div>
-                <div class="d-flex justify-content-between small text-secondary mt-1"><span>Cab end</span><span>Rear door</span></div>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 mb-2">
+                    <h3 class="h6 fw-bold mb-0">Cargo layout</h3>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Cargo view">
+                        <button type="button" class="btn btn-outline-primary active" id="view3d" aria-pressed="true">3D view</button>
+                        <button type="button" class="btn btn-outline-primary" id="viewFloor" aria-pressed="false">Floor view</button>
+                    </div>
+                </div>
+                <div id="cargo3d">
+                    <div class="load-scene">
+                        <canvas id="loadCanvas" aria-label="3D cargo bay showing packages at their estimated positions"></canvas>
+                        <span class="load-end-label" id="cargoCab" hidden>Cab end</span>
+                        <span class="load-end-label" id="cargoRear" hidden>Rear end</span>
+                        <div id="cargoPlaceholder" class="load-placeholder small text-secondary">No load calculated.</div>
+                    </div>
+                    <div id="cargoControls" class="row g-2 mt-1 align-items-end" hidden>
+                        <div class="col-6 col-md-3"><label class="form-label small mb-1" for="cargoTurn">Rotation</label><input class="form-range" type="range" min="-180" max="180" value="30" id="cargoTurn"></div>
+                        <div class="col-6 col-md-3"><label class="form-label small mb-1" for="cargoTilt">Elevation</label><input class="form-range" type="range" min="12" max="88" value="28" id="cargoTilt"></div>
+                        <div class="col-7 col-md-4"><label class="form-label small mb-1" for="cargoLevel">Show through</label><select class="form-select form-select-sm" id="cargoLevel"><option value="">All levels</option></select></div>
+                        <div class="col-5 col-md-2"><button type="button" class="btn btn-sm btn-outline-secondary w-100" id="cargoReset">Reset</button></div>
+                    </div>
+                    <p id="cargoViewNote" class="small text-secondary mt-2 mb-0"></p>
+                </div>
+                <div id="cargoFloor" hidden>
+                    <div id="loadFloor" class="load-floor"><div class="text-secondary small text-center py-5">No load calculated.</div></div>
+                    <div class="d-flex justify-content-between small text-secondary mt-1"><span>Cab end</span><span>First layer only</span><span>Rear end</span></div>
+                </div>
                 <div id="floorLegend" class="small mt-3"></div>
+                <div id="cargoInspector" class="mt-3" hidden>
+                    <label for="cargoPlacement" class="form-label small fw-semibold mb-1">Inspect a placement</label>
+                    <select class="form-select form-select-sm" id="cargoPlacement"></select>
+                    <p id="cargoPlacementDetail" class="small text-secondary mt-2 mb-0" aria-live="polite"></p>
+                </div>
             </div></div>
             <div class="card border-0 shadow-sm mb-3"><div class="card-body p-4">
                 <h2 class="h5 fw-bold mb-2">Planned goods result</h2>
@@ -82,7 +110,7 @@ $boxData = array_map(static fn(array $box): array => [
             </div></div>
         </div>
     </div>
-    <p class="text-secondary small mt-4 mb-0">Planning estimate only. The layout treats cylinders as square footprints and assumes stable stacking and a clear rectangular cargo bay. Check wheel wells, floor/axle limits, loading order, securing space, and package strength before dispatch.</p>
+    <p class="text-secondary small mt-4 mb-0">Planning estimate only. Cylinders use square footprints. Irregular items reserve a rectangular space and stay on the floor with the space above them clear. Check loading order, axle limits, securing space, and package strength before dispatch.</p>
 </div>
-<template id="loadRowTemplate"><div class="load-item-row border rounded-3 p-3 mb-2"><div class="row g-2 align-items-end"><div class="col-sm-7"><label class="form-label small fw-semibold">Package type</label><select class="form-select load-box-select"><option value="">Choose package</option><?php foreach ($boxes as $box): ?><option value="<?= (int) $box['id'] ?>"><?= e($box['code'] . ' · ' . $box['name']) ?></option><?php endforeach; ?><option value="custom">Custom dimensions…</option></select></div><div class="col-6 col-sm-3"><label class="form-label small fw-semibold">Quantity</label><input class="form-control load-quantity" type="number" min="1" max="10000" step="1" value="1"></div><div class="col-6 col-sm-2"><button type="button" class="btn btn-outline-danger w-100 load-remove" aria-label="Remove item">×</button></div></div><div class="load-box-details small text-secondary mt-2"></div><div class="load-custom-fields d-none mt-3 pt-3 border-top"><div class="row g-2"><div class="col-sm-7"><label class="form-label small">Item name</label><input class="form-control custom-name" maxlength="80" placeholder="e.g. appliance carton"></div><div class="col-sm-5"><label class="form-label small">Shape</label><select class="form-select custom-shape"><option value="Box">Rectangular box</option><option value="Cylinder">Upright cylinder</option></select></div><div class="col-4"><label class="form-label small custom-length-label">Length (cm)</label><input class="form-control custom-length" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4 custom-width-wrap"><label class="form-label small">Width (cm)</label><input class="form-control custom-width" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4"><label class="form-label small">Height (cm)</label><input class="form-control custom-height" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-sm-6"><label class="form-label small">Weight each (kg)</label><input class="form-control custom-weight" type="number" min="0.001" step="0.001"></div><div class="col-sm-6 align-self-end"><div class="form-check mb-2"><input class="form-check-input custom-tilt" type="checkbox"><label class="form-check-label small">May be placed on its side</label></div></div></div></div></div></template>
-<?php $pageModule = 'load-planner.mjs'; ?>
+<template id="loadRowTemplate"><div class="load-item-row border rounded-3 p-3 mb-2"><div class="row g-2 align-items-end"><div class="col-sm-7"><label class="form-label small fw-semibold">Package type</label><select class="form-select load-box-select"><option value="">Choose package</option><?php foreach ($boxes as $box): ?><option value="<?= (int) $box['id'] ?>"><?= e($box['code'] . ' · ' . $box['name']) ?></option><?php endforeach; ?><option value="custom">Custom dimensions…</option></select></div><div class="col-6 col-sm-3"><label class="form-label small fw-semibold">Quantity</label><input class="form-control load-quantity" type="number" min="1" max="10000" step="1" value="1"></div><div class="col-6 col-sm-2"><button type="button" class="btn btn-outline-danger w-100 load-remove" aria-label="Remove item">×</button></div></div><div class="load-box-details small text-secondary mt-2"></div><div class="load-custom-fields d-none mt-3 pt-3 border-top"><div class="row g-2"><div class="col-sm-7"><label class="form-label small">Item name</label><input class="form-control custom-name" maxlength="80" placeholder="e.g. appliance carton"></div><div class="col-sm-5"><label class="form-label small">Shape</label><select class="form-select custom-shape"><?php foreach (BoxType::SHAPES as $value => $label): ?><option value="<?= e($value) ?>"><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 small text-secondary custom-shape-hint"></div><div class="col-4"><label class="form-label small custom-length-label">Length (cm)</label><input class="form-control custom-length" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4 custom-width-wrap"><label class="form-label small">Width (cm)</label><input class="form-control custom-width" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4"><label class="form-label small">Height (cm)</label><input class="form-control custom-height" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-sm-6"><label class="form-label small">Weight each (kg)</label><input class="form-control custom-weight" type="number" min="0.001" step="0.001"></div><div class="col-sm-6 align-self-end"><div class="form-check mb-2"><input class="form-check-input custom-tilt" type="checkbox"><label class="form-check-label small">May be placed on its side</label></div></div></div></div></div></template>
+<?php $pageModule = 'load-planner.mjs?v=3d1'; ?>

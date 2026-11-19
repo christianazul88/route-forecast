@@ -52,7 +52,7 @@ final class BoxTypeController
         if ($box['name'] === '' || mb_strlen($box['name']) > 150) {
             $errors[] = 'Name is required and must be at most 150 characters.';
         }
-        if (!in_array($box['shape'], ['Box', 'Cylinder'], true)) {
+        if (!isset(BoxType::SHAPES[$box['shape']])) {
             $errors[] = 'Select a valid shape.';
         }
         foreach (['length_cm', 'width_cm', 'height_cm'] as $field) {
