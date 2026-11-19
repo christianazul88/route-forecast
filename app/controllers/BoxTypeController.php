@@ -65,6 +65,7 @@ final class BoxTypeController
             $errors[] = 'Enter a positive weight in kilograms.';
         }
         if ($errors) {
+            http_response_code(422);
             render('boxes/form', ['title' => $id ? 'Edit box type' : 'Add box type', 'box' => $box, 'errors' => $errors]);
             return;
         }
@@ -76,6 +77,7 @@ final class BoxTypeController
             if ($error->getCode() !== '23000') {
                 throw $error;
             }
+            http_response_code(422);
             render('boxes/form', ['title' => $id ? 'Edit box type' : 'Add box type', 'box' => $box, 'errors' => ['Code already exists.']]);
         }
     }

@@ -54,6 +54,7 @@ final class FuelController
                     redirect('fuel', ['trip_id' => $tripId]);
                 }
             } catch (InvalidArgumentException | RoutingException $failure) {
+                http_response_code($failure instanceof RoutingException ? $failure->httpStatus : 422);
                 $error = $failure->getMessage();
             }
         }
@@ -79,6 +80,7 @@ final class FuelController
             FuelEstimate::recordPrice($price, $day, $station, (int) current_user()['id']);
             flash('success', 'Team diesel price recorded.');
         } catch (InvalidArgumentException $error) {
+            AuditLog::tryRecord(current_user()['id'], 'change_rejected', 'diesel_price', null);
             flash('warning', $error->getMessage());
         }
         redirect('fuel');

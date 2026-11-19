@@ -41,6 +41,8 @@ For a database created before the fuel planner, apply `database/migrations/009_f
 
 Admin users can add, edit, and archive branches and trucks. Planner users can view them. Archiving keeps references intact for trip history. Open **Archived branches** to review a location. The origin warehouse cannot be archived.
 
+Admins can open **Audit log** to view sign-in attempts, sign-outs, accessed pages, form submissions, and record changes. Filter by authentication, saved changes, or failed and denied activity. The app records requested load calculations and printing from their action buttons. Passwords and setup tokens are excluded from the audit log. Successful record changes include the relevant record ID.
+
 ## OpenRouteService key
 
 Create a free account and API key at [OpenRouteService](https://openrouteservice.org/). Put the key in `C:\xampp\route-forecast.env` as `ORS_API_KEY=...`. Keep that file outside `htdocs`. The browser calls only `public/index.php?page=route_proxy`; PHP calls the [ORS Directions JSON API](https://giscience.github.io/openrouteservice/api-reference/endpoints/directions/requests-and-return-types) with the `driving-hgv` profile. The key never enters the HTML or JavaScript. If the key is missing or ORS rejects it, the forecast page shows a friendly message.

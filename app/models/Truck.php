@@ -57,31 +57,35 @@ final class Truck
 
     public static function save(array $data, ?int $id): int
     {
-        $fields = [
-            $data['plate_no'], $data['name'], $data['body_type'], $data['capacity_kg'],
-            ($data['diesel_km_per_liter'] ?? '') === '' ? null : $data['diesel_km_per_liter'],
-            $data['cargo_length_cm'], $data['cargo_width_cm'], $data['cargo_height_cm'],
-            json_encode($data['openings'], JSON_THROW_ON_ERROR), $data['is_active'],
-        ];
-        if ($id === null) {
-            $statement = db()->prepare('INSERT INTO trucks (plate_no, name, body_type, capacity_kg, diesel_km_per_liter, cargo_length_cm, cargo_width_cm, cargo_height_cm, openings_json, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-            $statement->execute($fields);
-            $id = (int) db()->lastInsertId();
-        } else {
-            $statement = db()->prepare('UPDATE trucks SET plate_no = ?, name = ?, body_type = ?, capacity_kg = ?, diesel_km_per_liter = ?, cargo_length_cm = ?, cargo_width_cm = ?, cargo_height_cm = ?, openings_json = ?, is_active = ? WHERE id = ?');
-            $statement->execute([...$fields, $id]);
-        }
-        audit('save', 'truck', $id, ['plate_no' => $data['plate_no']]);
-        return $id;
+        return db_transaction(static function (PDO $pdo) use ($data, $id): int {
+            $fields = [
+                $data['plate_no'], $data['name'], $data['body_type'], $data['capacity_kg'],
+                ($data['diesel_km_per_liter'] ?? '') === '' ? null : $data['diesel_km_per_liter'],
+                $data['cargo_length_cm'], $data['cargo_width_cm'], $data['cargo_height_cm'],
+                json_encode($data['openings'], JSON_THROW_ON_ERROR), $data['is_active'],
+            ];
+            if ($id === null) {
+                $statement = $pdo->prepare('INSERT INTO trucks (plate_no, name, body_type, capacity_kg, diesel_km_per_liter, cargo_length_cm, cargo_width_cm, cargo_height_cm, openings_json, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                $statement->execute($fields);
+                $id = (int) $pdo->lastInsertId();
+            } else {
+                $statement = $pdo->prepare('UPDATE trucks SET plate_no = ?, name = ?, body_type = ?, capacity_kg = ?, diesel_km_per_liter = ?, cargo_length_cm = ?, cargo_width_cm = ?, cargo_height_cm = ?, openings_json = ?, is_active = ? WHERE id = ?');
+                $statement->execute([...$fields, $id]);
+            }
+            audit('save', 'truck', $id, ['plate_no' => $data['plate_no']]);
+            return $id;
+        });
     }
 
     public static function archive(int $id): void
     {
-        $statement = db()->prepare('UPDATE trucks SET is_active = 0 WHERE id = ?');
-        $statement->execute([$id]);
-        if ($statement->rowCount() === 0) {
-            throw new RuntimeException('Truck not found or already inactive.');
-        }
-        audit('archive', 'truck', $id);
+        db_transaction(static function (PDO $pdo) use ($id): void {
+            $statement = $pdo->prepare('UPDATE trucks SET is_active = 0 WHERE id = ?');
+            $statement->execute([$id]);
+            if ($statement->rowCount() === 0) {
+                throw new RuntimeException('Truck not found or already inactive.');
+            }
+            audit('archive', 'truck', $id);
+        });
     }
 }

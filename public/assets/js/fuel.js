@@ -17,4 +17,7 @@
     mode.addEventListener('change', showReturnFields);
     method.addEventListener('change', showReturnFields);
     showReturnFields();
+    if (form.dataset.showResult === '1' && window.matchMedia('(max-width: 991.98px)').matches) {
+        document.getElementById('fuelResults').focus();
+    }
 })();

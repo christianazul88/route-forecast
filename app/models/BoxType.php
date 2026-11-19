@@ -28,26 +28,30 @@ final class BoxType
 
     public static function save(array $data, ?int $id): int
     {
-        $fields = [$data['code'], $data['name'], $data['shape'], $data['length_cm'], $data['width_cm'], $data['height_cm'], $data['weight_kg'], $data['can_tilt'], $data['is_active']];
-        if ($id === null) {
-            $statement = db()->prepare('INSERT INTO box_types (code, name, shape, length_cm, width_cm, height_cm, weight_kg, can_tilt, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-            $statement->execute($fields);
-            $id = (int) db()->lastInsertId();
-        } else {
-            $statement = db()->prepare('UPDATE box_types SET code = ?, name = ?, shape = ?, length_cm = ?, width_cm = ?, height_cm = ?, weight_kg = ?, can_tilt = ?, is_active = ? WHERE id = ?');
-            $statement->execute([...$fields, $id]);
-        }
-        audit('save', 'box_type', $id, ['code' => $data['code']]);
-        return $id;
+        return db_transaction(static function (PDO $pdo) use ($data, $id): int {
+            $fields = [$data['code'], $data['name'], $data['shape'], $data['length_cm'], $data['width_cm'], $data['height_cm'], $data['weight_kg'], $data['can_tilt'], $data['is_active']];
+            if ($id === null) {
+                $statement = $pdo->prepare('INSERT INTO box_types (code, name, shape, length_cm, width_cm, height_cm, weight_kg, can_tilt, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                $statement->execute($fields);
+                $id = (int) $pdo->lastInsertId();
+            } else {
+                $statement = $pdo->prepare('UPDATE box_types SET code = ?, name = ?, shape = ?, length_cm = ?, width_cm = ?, height_cm = ?, weight_kg = ?, can_tilt = ?, is_active = ? WHERE id = ?');
+                $statement->execute([...$fields, $id]);
+            }
+            audit('save', 'box_type', $id, ['code' => $data['code']]);
+            return $id;
+        });
     }
 
     public static function archive(int $id): void
     {
-        $statement = db()->prepare('UPDATE box_types SET is_active = 0 WHERE id = ?');
-        $statement->execute([$id]);
-        if ($statement->rowCount() === 0) {
-            throw new RuntimeException('Box type not found or already inactive.');
-        }
-        audit('archive', 'box_type', $id);
+        db_transaction(static function (PDO $pdo) use ($id): void {
+            $statement = $pdo->prepare('UPDATE box_types SET is_active = 0 WHERE id = ?');
+            $statement->execute([$id]);
+            if ($statement->rowCount() === 0) {
+                throw new RuntimeException('Box type not found or already inactive.');
+            }
+            audit('archive', 'box_type', $id);
+        });
     }
 }

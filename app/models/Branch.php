@@ -61,11 +61,13 @@ final class Branch
 
     public static function archive(int $id): void
     {
-        $statement = db()->prepare('UPDATE branches SET is_active = 0 WHERE id = ? AND is_origin = 0');
-        $statement->execute([$id]);
-        if ($statement->rowCount() === 0) {
-            throw new RuntimeException('The origin warehouse cannot be archived.');
-        }
-        audit('archive', 'branch', $id);
+        db_transaction(static function (PDO $pdo) use ($id): void {
+            $statement = $pdo->prepare('UPDATE branches SET is_active = 0 WHERE id = ? AND is_origin = 0');
+            $statement->execute([$id]);
+            if ($statement->rowCount() === 0) {
+                throw new RuntimeException('The origin warehouse cannot be archived.');
+            }
+            audit('archive', 'branch', $id);
+        });
     }
 }

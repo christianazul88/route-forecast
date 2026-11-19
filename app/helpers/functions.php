@@ -20,6 +20,21 @@ function db(): PDO
     return $pdo;
 }
 
+function db_transaction(callable $work): mixed
+{
+    $pdo = db();
+    if ($pdo->inTransaction()) return $work($pdo);
+    $pdo->beginTransaction();
+    try {
+        $result = $work($pdo);
+        $pdo->commit();
+        return $result;
+    } catch (Throwable $error) {
+        $pdo->rollBack();
+        throw $error;
+    }
+}
+
 function e(?string $value): string
 {
     return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -58,8 +73,8 @@ function csrf_field(): string
 
 function verify_csrf(): void
 {
-    $submitted = (string) ($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
-    if (!hash_equals(csrf_token(), $submitted)) {
+    $submitted = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!is_string($submitted) || !hash_equals(csrf_token(), $submitted)) {
         http_response_code(403);
         throw new RuntimeException('Your form expired. Refresh the page and try again.');
     }
@@ -96,8 +111,7 @@ function render(string $view, array $data = []): void
 
 function audit(string $action, string $entityType, ?int $entityId, array $details = []): void
 {
-    $statement = db()->prepare('INSERT INTO audit_log (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?)');
-    $statement->execute([current_user()['id'] ?? null, $action, $entityType, $entityId, json_encode($details, JSON_THROW_ON_ERROR)]);
+    AuditLog::record(current_user()['id'] ?? null, $action, $entityType, $entityId, $details);
 }
 
 function positive_id(mixed $value): int

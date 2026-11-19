@@ -20,6 +20,8 @@ if (mapElement && typeof L !== 'undefined') {
   const cacheBadge = document.getElementById('routeCacheBadge');
   const saveForm = document.getElementById('saveTripForm');
   const saveButton = document.getElementById('saveTripButton');
+  const recalculateStatus = document.getElementById('recalculateStatus');
+  const saveStatus = document.getElementById('saveTripStatus');
   const truckSelect = document.getElementById('tripTruck');
   const driverField = document.getElementById('tripDriver');
   const dateField = document.getElementById('tripDate');
@@ -56,7 +58,7 @@ if (mapElement && typeof L !== 'undefined') {
   };
 
   const showMessage = (text, type = 'info') => {
-    message.className = `alert alert-${type} mb-0`;
+    message.className = `alert alert-${type} mt-3 mb-0`;
     message.textContent = text;
   };
 
@@ -346,6 +348,8 @@ if (mapElement && typeof L !== 'undefined') {
     if (event.target.checked) selectedIds.add(id);
     else selectedIds.delete(id);
     finalRoute = null;
+    recalculateStatus.textContent = '';
+    saveStatus.textContent = '';
     updateSummary();
     drawRoutes();
     drawMarkers();
@@ -361,11 +365,12 @@ if (mapElement && typeof L !== 'undefined') {
       finalRoute = directRoute;
       drawRoutes();
       updateSummary();
-      showMessage('The direct route is the current preview.', 'success');
+      recalculateStatus.textContent = 'Using the direct route.';
       return;
     }
     recalculateButton.disabled = true;
-    showMessage(`Recalculating with ${stops.length} optional stop${stops.length === 1 ? '' : 's'}…`, 'info');
+    recalculateStatus.classList.remove('text-danger');
+    recalculateStatus.textContent = `Recalculating with ${stops.length} optional stop${stops.length === 1 ? '' : 's'}…`;
     const generation = directGeneration;
     const selection = stops.join(':');
     try {
@@ -374,9 +379,12 @@ if (mapElement && typeof L !== 'undefined') {
       finalRoute = route;
       drawRoutes();
       updateSummary();
-      showMessage('Recalculated route ready. The map and totals include your selected stops.', 'success');
+      recalculateStatus.textContent = 'Route updated with your selected stops.';
     } catch (error) {
-      if (generation === directGeneration) showMessage(error.message, 'warning');
+      if (generation === directGeneration) {
+        recalculateStatus.classList.add('text-danger');
+        recalculateStatus.textContent = error.message;
+      }
     } finally {
       updateSummary();
     }
@@ -389,6 +397,8 @@ if (mapElement && typeof L !== 'undefined') {
     estimateGeneration += 1;
     directRoute = null;
     finalRoute = null;
+    recalculateStatus.textContent = '';
+    saveStatus.textContent = '';
     candidates = [];
     selectedIds.clear();
     clearRouteLines();
@@ -408,6 +418,7 @@ if (mapElement && typeof L !== 'undefined') {
     if (saving) return;
     corridorValue.textContent = `${Number(corridorSlider.value).toFixed(1)} km`;
     finalRoute = null;
+    recalculateStatus.textContent = '';
     updateSummary();
     refreshDebounced();
   });
@@ -431,7 +442,8 @@ if (mapElement && typeof L !== 'undefined') {
     [originSelect, destinationSelect, corridorSlider, truckSelect, driverField, dateField, recalculateButton].forEach((field) => { field.disabled = true; });
     candidateList.querySelectorAll('input[type="checkbox"]').forEach((field) => { field.disabled = true; });
     updateSummary();
-    showMessage('Saving the planned trip and route…', 'info');
+    saveStatus.classList.remove('text-danger');
+    saveStatus.textContent = 'Saving the planned trip and route…';
     try {
       const response = await fetch(mapElement.dataset.saveUrl, {
         method: 'POST',
@@ -443,7 +455,8 @@ if (mapElement && typeof L !== 'undefined') {
       if (!response.ok) throw new Error(payload.error || 'Could not save the trip.');
       window.location.assign(payload.url);
     } catch (error) {
-      showMessage(error.message || 'Could not save the trip. Try again.', 'warning');
+      saveStatus.classList.add('text-danger');
+      saveStatus.textContent = error.message || 'Could not save the trip. Try again.';
       saving = false;
       saveButton.textContent = 'Save planned trip';
       [originSelect, destinationSelect, corridorSlider, truckSelect, driverField, dateField].forEach((field) => { field.disabled = false; });

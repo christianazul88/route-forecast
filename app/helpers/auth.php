@@ -27,12 +27,12 @@ function require_login(): void
     }
 }
 
-function require_admin(): void
+function require_admin(string $message = 'Only admins can change masterfile records.'): void
 {
     require_login();
     if (current_user()['role'] !== 'Admin') {
         http_response_code(403);
-        throw new RuntimeException('Only admins can change masterfile records.');
+        throw new RuntimeException($message);
     }
 }
 

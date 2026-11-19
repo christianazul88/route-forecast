@@ -39,7 +39,7 @@ $metric = static fn(float|string $number, int $decimals = 2): string => number_f
         </div></div>
 
         <div class="card border-0 shadow-sm"><div class="card-body p-3 p-sm-4">
-            <form id="fuelForm" method="post" action="<?= e($pageUrl) ?>" data-has-trip="<?= $trip ? '1' : '0' ?>">
+            <form id="fuelForm" method="post" action="<?= e($pageUrl) ?>" data-has-trip="<?= $trip ? '1' : '0' ?>" data-show-result="<?= $result && !$isSaved ? '1' : '0' ?>">
                 <?= csrf_field() ?>
                 <div class="row g-3">
                     <?php if (!$trip): ?>
@@ -86,8 +86,8 @@ $metric = static fn(float|string $number, int $decimals = 2): string => number_f
     </div>
 
     <div class="col-lg-5">
-        <div class="card border-0 shadow-sm mb-3" id="fuelResults"><div class="card-body p-3 p-sm-4">
-            <h2 class="h5 fw-bold mb-3"><?= $isSaved ? 'Saved fuel estimate' : 'Fuel estimate' ?></h2>
+        <div class="card border-0 shadow-sm mb-3 fuel-result" id="fuelResults" tabindex="-1"><div class="card-body p-3 p-sm-4">
+            <h2 class="h5 fw-bold mb-3"><i class="bi bi-fuel-pump text-primary" aria-hidden="true"></i> <?= $isSaved ? 'Saved fuel estimate' : 'Fuel estimate' ?></h2>
             <?php if ($result): ?>
                 <dl class="mb-0">
                     <div class="summary-row"><dt>Outbound</dt><dd class="mb-0 text-end"><?= $metric($result['outbound_km']) ?> km · <?= $metric($result['outbound_liters']) ?> L</dd></div>
@@ -99,7 +99,7 @@ $metric = static fn(float|string $number, int $decimals = 2): string => number_f
                     </dd></div>
                     <div class="summary-row"><dt>Total travel</dt><dd class="mb-0"><?= $metric($result['total_km']) ?> km</dd></div>
                     <div class="summary-row"><dt>Estimated diesel</dt><dd class="mb-0"><?= $metric($result['total_liters']) ?> L</dd></div>
-                    <div class="summary-row border-0"><dt>Estimated cost</dt><dd class="mb-0 fw-bold fs-4">₱<?= $metric($result['total_cost_php']) ?></dd></div>
+                    <div class="summary-row border-0"><dt>Estimated cost</dt><dd class="mb-0 fw-bold fs-4 text-primary">₱<?= $metric($result['total_cost_php']) ?></dd></div>
                 </dl>
                 <p class="small text-secondary mb-0">₱<?= $metric($result['values']['price']) ?>/L from <?= e($result['values']['station']) ?>, observed <?= e($result['values']['price_date']) ?>.</p>
             <?php else: ?>
@@ -130,4 +130,4 @@ $metric = static fn(float|string $number, int $decimals = 2): string => number_f
         </div></div>
     </div>
 </div>
-<?php $pageScript = 'fuel.js?v=1'; ?>
+<?php $pageScript = 'fuel.js?v=mobile1'; ?>

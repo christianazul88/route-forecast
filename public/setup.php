@@ -57,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (RuntimeException $error) {
         $errors[] = $error->getMessage();
     }
+    if ($errors) {
+        AuditLog::authentication('setup_failed', $values['username']);
+    }
 }
 
 render('setup', ['title' => 'First admin setup', 'errors' => $errors, 'values' => $values]);

@@ -73,6 +73,7 @@ final class TruckController
         }
         $truck['openings'] = self::readOpenings($truck, $errors);
         if ($errors) {
+            http_response_code(422);
             render('trucks/form', ['title' => $id ? 'Edit truck' : 'Add truck', 'truck' => $truck, 'errors' => $errors]);
             return;
         }
@@ -84,6 +85,7 @@ final class TruckController
             if ($error->getCode() !== '23000') {
                 throw $error;
             }
+            http_response_code(422);
             render('trucks/form', ['title' => $id ? 'Edit truck' : 'Add truck', 'truck' => $truck, 'errors' => ['Plate number already exists.']]);
         }
     }

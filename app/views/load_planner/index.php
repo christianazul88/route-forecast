@@ -23,7 +23,7 @@ $boxData = array_map(static fn(array $box): array => [
 ?>
 <div class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
     <div><h1 class="display-6 fw-bold mb-1">Load planner</h1><p class="text-secondary mb-0">Plan what fits, the loading order, and which doors to use at each stop.</p></div>
-    <div class="d-flex flex-wrap gap-2">
+    <div class="page-actions d-flex flex-wrap gap-2">
         <?php if (!$detail && $demoAvailable): ?><a class="btn btn-outline-primary" href="<?= e(url('load_planner', $demo ? [] : ['demo' => 1])) ?>"><?= $demo ? 'Start blank' : 'Try demo load' ?></a><?php endif; ?>
         <a class="btn btn-outline-secondary" href="<?= e(url('boxes')) ?>">Box types</a>
     </div>
@@ -43,7 +43,7 @@ $boxData = array_map(static fn(array $box): array => [
                 <?php if ($detail): ?>
                     <a href="<?= e(url('trip_detail', ['id' => $detail['trip']['id']])) ?>"><?= e($detail['trip']['trip_no']) ?></a>
                     <p class="small text-secondary mb-0"><?= e($detail['trip']['origin_name']) ?> → <?= e($detail['trip']['destination_name']) ?></p>
-                <?php else: ?>
+                <?php elseif ($trips): ?>
                     <form method="get" class="d-flex flex-wrap gap-2">
                         <input type="hidden" name="page" value="load_planner">
                         <label class="visually-hidden" for="plannedTrip">Planned trip</label>
@@ -54,6 +54,8 @@ $boxData = array_map(static fn(array $box): array => [
                         <button class="btn btn-outline-primary w-100">Open trip</button>
                     </form>
                     <p class="form-text mb-0">You can also estimate a load without a trip.</p>
+                <?php else: ?>
+                    <p class="text-secondary small mb-0">No planned trips. Choose a truck below to estimate a load.</p>
                 <?php endif; ?>
             </div></div>
             <div class="card border-0 shadow-sm mb-3"><div class="card-body p-4">
@@ -63,16 +65,16 @@ $boxData = array_map(static fn(array $box): array => [
                 <div id="truckMeasurements" class="small text-secondary mb-3">Select a truck to see its usable space.</div>
                 <div id="customTruckFields" class="row g-2 mb-3 d-none">
                     <div class="col-12 small text-secondary">Quick estimate with a single rear opening. Save the truck to model multiple openings.</div>
-                    <div class="col-4"><label class="form-label small" for="customTruckLength">Length (ft)</label><input id="customTruckLength" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
-                    <div class="col-4"><label class="form-label small" for="customTruckWidth">Width (ft)</label><input id="customTruckWidth" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
-                    <div class="col-4"><label class="form-label small" for="customTruckHeight">Height (ft)</label><input id="customTruckHeight" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
-                    <div class="col-4"><label class="form-label small" for="customTruckCapacity">Payload (kg)</label><input id="customTruckCapacity" class="form-control custom-truck-field" type="number" min="0.01" step="0.01"></div>
-                    <div class="col-4"><label class="form-label small" for="customDoorWidth">Door width (ft)</label><input id="customDoorWidth" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
-                    <div class="col-4"><label class="form-label small" for="customDoorHeight">Door height (ft)</label><input id="customDoorHeight" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
+                    <div class="col-6 col-sm-4"><label class="form-label small" for="customTruckLength">Length (ft)</label><input id="customTruckLength" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
+                    <div class="col-6 col-sm-4"><label class="form-label small" for="customTruckWidth">Width (ft)</label><input id="customTruckWidth" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
+                    <div class="col-6 col-sm-4"><label class="form-label small" for="customTruckHeight">Height (ft)</label><input id="customTruckHeight" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
+                    <div class="col-6 col-sm-4"><label class="form-label small" for="customTruckCapacity">Payload (kg)</label><input id="customTruckCapacity" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="0.01"></div>
+                    <div class="col-6 col-sm-4"><label class="form-label small" for="customDoorWidth">Door width (ft)</label><input id="customDoorWidth" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
+                    <div class="col-6 col-sm-4"><label class="form-label small" for="customDoorHeight">Door height (ft)</label><input id="customDoorHeight" class="form-control custom-truck-field" type="number" inputmode="decimal" min="0.01" step="any"></div>
                     <div class="col-12 form-text">Leave both door fields blank to assume an open rear face for the estimate.</div>
                 </div>
                 <label for="wallClearance" class="form-label fw-semibold">Wall and roof clearance (cm)</label>
-                <input id="wallClearance" type="number" min="0" max="50" step="0.5" value="2" class="form-control" style="max-width: 160px">
+                <input id="wallClearance" type="number" inputmode="decimal" min="0" max="50" step="0.5" value="2" class="form-control" style="max-width: 160px">
                 <div class="form-text">Reserved on both sides and at the front/rear; also deducted from clear door width and height.</div>
             </div></div>
             <div class="card border-0 shadow-sm"><div class="card-body p-4">
@@ -80,15 +82,15 @@ $boxData = array_map(static fn(array $box): array => [
                 <p class="text-secondary small">Select the doors available at each stop and assign each item to its delivery.</p>
                 <div id="deliveryDoors"></div>
                 <div id="loadRows"></div>
-                <button id="calculateLoad" type="button" class="btn btn-primary w-100 mt-3">Estimate load</button>
+                <button id="calculateLoad" type="button" data-audit-event="load_estimate_requested" data-audit-id="<?= (int) ($tripData['id'] ?? 0) ?>" class="btn btn-primary w-100 mt-3">Estimate load</button>
             </div></div>
         </div>
         <div class="col-lg-7 min-w-0" id="estimatePanel">
             <div id="loadMessage" class="alert alert-info" role="status" aria-live="polite">Choose a truck and add goods to estimate a load.</div>
             <?php if ($detail && $detail['trip']['status'] === 'Planned'): ?><button id="saveLoad" type="button" class="btn btn-primary w-100 mb-3" disabled>Save load plan to trip</button><?php endif; ?>
             <div class="row g-3 mb-3">
-                <div class="col-sm-6"><div class="card border-0 shadow-sm metric-card"><div class="card-body p-4"><div class="text-secondary small">Items loaded</div><div id="placedMetric" class="metric-value">—</div><div id="placedSub" class="small text-secondary">of requested quantity</div></div></div></div>
-                <div class="col-sm-6"><div class="card border-0 shadow-sm metric-card"><div class="card-body p-4"><div class="text-secondary small">Payload used</div><div id="weightMetric" class="metric-value">—</div><div id="weightSub" class="small text-secondary">of truck capacity</div></div></div></div>
+                <div class="col-6"><div class="card border-0 shadow-sm metric-card"><div class="card-body p-4"><div class="text-secondary small">Items loaded</div><div id="placedMetric" class="metric-value">—</div><div id="placedSub" class="small text-secondary">of requested quantity</div></div></div></div>
+                <div class="col-6"><div class="card border-0 shadow-sm metric-card"><div class="card-body p-4"><div class="text-secondary small">Payload used</div><div id="weightMetric" class="metric-value">—</div><div id="weightSub" class="small text-secondary">of truck capacity</div></div></div></div>
             </div>
             <div class="card border-0 shadow-sm mb-3"><div class="card-body p-4">
                 <div class="d-flex justify-content-between gap-2"><h2 class="h5 fw-bold">Space used</h2><strong id="spacePercent">—</strong></div>
@@ -147,7 +149,7 @@ $boxData = array_map(static fn(array $box): array => [
                     <select id="capacityPackage" class="form-select" required><option value="">Choose a package</option></select>
                     <label for="capacityStop" class="visually-hidden">Delivery stop to check</label>
                     <select id="capacityStop" class="form-select" required></select>
-                    <button id="capacityCheck" type="submit" class="btn btn-outline-primary" disabled>Check capacity</button>
+                    <button id="capacityCheck" type="submit" data-audit-event="capacity_check_requested" data-audit-id="<?= (int) ($tripData['id'] ?? 0) ?>" class="btn btn-outline-primary" disabled>Check capacity</button>
                 </form>
                 <p id="extraResult" class="small mb-0 mt-2" role="status"></p>
             </div></div>
@@ -155,5 +157,5 @@ $boxData = array_map(static fn(array $box): array => [
     </div>
     <p class="text-secondary small mt-4 mb-0">Planning estimate only. Cylinders use square footprints. Irregular items reserve a rectangular space and stay on the floor with the space above them clear. Check loading order, axle limits, securing space, and package strength before dispatch.</p>
 </div>
-<template id="loadRowTemplate"><div class="load-item-row border rounded-3 p-3 mb-2"><div class="row g-2 align-items-end"><div class="col-sm-7"><label class="form-label small fw-semibold">Package type</label><select class="form-select load-box-select"><option value="">Choose package</option><?php foreach ($boxes as $box): ?><option value="<?= (int) $box['id'] ?>"><?= e($box['code'] . ' · ' . $box['name']) ?></option><?php endforeach; ?><option value="custom">Custom dimensions…</option></select></div><div class="col-6 col-sm-3"><label class="form-label small fw-semibold">Quantity</label><input class="form-control load-quantity" type="number" min="1" max="10000" step="1" value="1"></div><div class="col-6 col-sm-2"><button type="button" class="btn btn-outline-danger w-100 load-remove" aria-label="Remove item">×</button></div></div><div class="load-box-details small text-secondary mt-2"></div><div class="load-custom-fields d-none mt-3 pt-3 border-top"><div class="row g-2"><div class="col-sm-7"><label class="form-label small">Item name</label><input class="form-control custom-name" maxlength="80" placeholder="e.g. appliance carton"></div><div class="col-sm-5"><label class="form-label small">Shape</label><select class="form-select custom-shape"><?php foreach (BoxType::SHAPES as $value => $label): ?><option value="<?= e($value) ?>"><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 small text-secondary custom-shape-hint"></div><div class="col-4"><label class="form-label small custom-length-label">Length (cm)</label><input class="form-control custom-length" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4 custom-width-wrap"><label class="form-label small">Width (cm)</label><input class="form-control custom-width" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-4"><label class="form-label small">Height (cm)</label><input class="form-control custom-height" type="number" min="0.01" max="2000" step="0.01"></div><div class="col-sm-6"><label class="form-label small">Weight each (kg)</label><input class="form-control custom-weight" type="number" min="0.001" step="0.001"></div><div class="col-sm-6 align-self-end"><div class="form-check mb-2"><input class="form-check-input custom-tilt" type="checkbox"><label class="form-check-label small">May be placed on its side</label></div></div></div></div></div></template>
+<template id="loadRowTemplate"><div class="load-item-row border rounded-3 p-3 mb-2"><div class="row g-2 align-items-end"><div class="col-sm-7"><label class="form-label small fw-semibold">Package type</label><select class="form-select load-box-select"><option value="">Choose package</option><?php foreach ($boxes as $box): ?><option value="<?= (int) $box['id'] ?>"><?= e($box['code'] . ' · ' . $box['name']) ?></option><?php endforeach; ?><option value="custom">Custom dimensions…</option></select></div><div class="col-6 col-sm-3"><label class="form-label small fw-semibold">Quantity</label><input class="form-control load-quantity" type="number" inputmode="numeric" min="1" max="10000" step="1" value="1"></div><div class="col-6 col-sm-2"><button type="button" class="btn btn-outline-danger w-100 load-remove" aria-label="Remove item" title="Remove item"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div></div><div class="load-box-details small text-secondary mt-2"></div><div class="load-custom-fields d-none mt-3 pt-3 border-top"><div class="row g-2"><div class="col-sm-7"><label class="form-label small">Item name</label><input class="form-control custom-name" maxlength="80" placeholder="e.g. appliance carton"></div><div class="col-sm-5"><label class="form-label small">Shape</label><select class="form-select custom-shape"><?php foreach (BoxType::SHAPES as $value => $label): ?><option value="<?= e($value) ?>"><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 small text-secondary custom-shape-hint"></div><div class="col-6 col-sm-4"><label class="form-label small custom-length-label">Length (cm)</label><input class="form-control custom-length" type="number" inputmode="decimal" min="0.01" max="2000" step="0.01"></div><div class="col-6 col-sm-4 custom-width-wrap"><label class="form-label small">Width (cm)</label><input class="form-control custom-width" type="number" inputmode="decimal" min="0.01" max="2000" step="0.01"></div><div class="col-6 col-sm-4"><label class="form-label small">Height (cm)</label><input class="form-control custom-height" type="number" inputmode="decimal" min="0.01" max="2000" step="0.01"></div><div class="col-sm-6"><label class="form-label small">Weight each (kg)</label><input class="form-control custom-weight" type="number" inputmode="decimal" min="0.001" step="0.001"></div><div class="col-sm-6 align-self-end"><div class="form-check mb-2"><input class="form-check-input custom-tilt" type="checkbox"><label class="form-check-label small">May be placed on its side</label></div></div></div></div></div></template>
 <?php $pageModule = 'load-planner.mjs?v=branches1'; ?>

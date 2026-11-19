@@ -73,6 +73,7 @@ final class BranchController
             $errors[] = 'Choose a new origin branch before removing this origin designation.';
         }
         if ($errors) {
+            http_response_code(422);
             render('branches/form', ['title' => $id ? 'Edit branch' : 'Add branch', 'branch' => $branch, 'errors' => $errors, 'mapAssets' => true]);
             return;
         }
@@ -84,6 +85,7 @@ final class BranchController
             if ($error->getCode() !== '23000') {
                 throw $error;
             }
+            http_response_code(422);
             render('branches/form', ['title' => $id ? 'Edit branch' : 'Add branch', 'branch' => $branch, 'errors' => ['Branch code already exists.'], 'mapAssets' => true]);
         }
     }

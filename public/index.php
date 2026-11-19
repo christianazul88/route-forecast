@@ -26,6 +26,8 @@ $routes = [
     'forecast' => [RouteForecastController::class, 'index'],
     'route_proxy' => [RouteProxyController::class, 'route'],
     'dashboard' => [DashboardController::class, 'index'],
+    'audit_log' => [AuditController::class, 'index'],
+    'audit_event' => [AuditController::class, 'recordEvent'],
     'trips' => [TripController::class, 'index'],
     'trip_save' => [TripController::class, 'save'],
     'trip_detail' => [TripController::class, 'detail'],
@@ -41,6 +43,7 @@ if (!isset($routes[$page])) {
 }
 
 try {
+    AuditLog::followRequest($page);
     $routes[$page]();
 } catch (Throwable $error) {
     $status = http_response_code();

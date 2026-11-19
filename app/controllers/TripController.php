@@ -188,6 +188,7 @@ final class TripController
             Trip::changeStatus($id, $newStatus);
             flash('success', 'Trip status changed to ' . $newStatus . '.');
         } catch (InvalidArgumentException $error) {
+            AuditLog::tryRecord(current_user()['id'], 'change_rejected', 'trip', $id, ['page' => 'trip_status']);
             flash('warning', $error->getMessage());
         }
         redirect('trip_detail', ['id' => $id]);
