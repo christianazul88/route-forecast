@@ -5,7 +5,7 @@ final class Branch
 {
     public static function active(): array
     {
-        return db()->query('SELECT id, code, name, address, lat, lng, is_origin FROM branches WHERE is_active = 1 ORDER BY is_origin DESC, name')->fetchAll();
+        return db()->query('SELECT id, code, name, address, lat, lng, is_active, is_origin FROM branches WHERE is_active = 1 ORDER BY is_origin DESC, name')->fetchAll();
     }
 
     public static function activeByIds(array $ids): array
